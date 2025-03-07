@@ -4,6 +4,7 @@ import { View } from "react-native";
 import { Sun } from "~/lib/icons/Sun";
 import { MoonStar } from "~/lib/icons/MoonStar";
 import { useColorScheme } from "~/lib/useColorScheme";
+import { Link } from "expo-router";
 
 export default function Index() {
   const { toggleColorScheme, colorScheme } = useColorScheme();
@@ -28,6 +29,7 @@ export default function Index() {
           <Sun className="text-foreground" />
         )}
       </Button>
+      <Link href="/settings">Hello</Link>
     </View>
   );
 }
