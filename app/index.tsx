@@ -1,4 +1,4 @@
-import Button from "@/components/Button";
+import { Button } from "~/components/ui/button";
 import { Alert, Text, View } from "react-native";
 
 export default function Index() {
@@ -12,11 +12,12 @@ export default function Index() {
         </Text>
       </View>
       <Button
-        label="Sounds good!"
         onPress={() => {
           Alert.alert("NativeWind", "You're all set up!");
         }}
-      />
+      >
+        <Text>Default</Text>
+      </Button>
     </View>
   );
 }
