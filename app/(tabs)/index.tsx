@@ -29,7 +29,7 @@ export default function Index() {
           <Sun className="text-foreground" />
         )}
       </Button>
-      <Link href="/settings">Hello</Link>
+      <Link href="/settings" className="text-muted-foreground">Hello</Link>
     </View>
   );
 }
