@@ -6,7 +6,7 @@ import { MoonStar } from "~/lib/icons/MoonStar";
 import { useColorScheme } from "~/lib/useColorScheme";
 import { Link } from "expo-router";
 
-export default function Index() {
+export default function Home() {
   const { toggleColorScheme, colorScheme } = useColorScheme();
 
   return (

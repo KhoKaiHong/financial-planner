@@ -7,7 +7,7 @@
     "newArchEnabled": true,
     "web": {
       "bundler": "metro",
-      "output": "static"
+      "output": "server"
     },
     "plugins": [
       "expo-router"
