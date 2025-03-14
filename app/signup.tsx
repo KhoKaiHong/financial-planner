@@ -1,14 +1,15 @@
-import { View } from "react-native";
+import { KeyboardAvoidingView, View, ScrollView, Platform, SafeAreaView } from "react-native";
 import { Text } from "~/components/ui/text";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "~/firebaseConfig";
-import { useState } from "react";
+import { useState, memo, useCallback, useMemo } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "~/components/ui/button";
 import * as v from "valibot";
 import { SafeParseResult } from "valibot";
+import { CircleAlert } from "~/lib/icons/CircleAlert";
 
 async function register(email: string, password: string) {
   return await createUserWithEmailAndPassword(auth, email, password);
@@ -37,14 +38,178 @@ const signUpSchema = v.object({
 
 type signUpInput = v.InferInput<typeof signUpSchema>;
 
+type EmailInputProps = {
+  email: string;
+  setEmail: (email: string) => void;
+  emailParseResult: SafeParseResult<typeof emailSchema> | null;
+  setEmailParseResult: (
+    emailParseResult: SafeParseResult<typeof emailSchema> | null
+  ) => void;
+};
+
+const EmailInput = memo(function EmailInput(props: EmailInputProps) {
+  const { email, setEmail, emailParseResult, setEmailParseResult } = props;
+
+  const handleEmailChange = useCallback(
+    (text: string) => {
+      const trimmed = text.trim();
+      setEmail(trimmed);
+      const result = v.safeParse(emailSchema, trimmed);
+      setEmailParseResult(result);
+    },
+    [setEmail, setEmailParseResult]
+  );
+
+  const isSuccess = useMemo(() => {
+    return emailParseResult === null || emailParseResult.success;
+  }, [emailParseResult]);
+
+  return (
+    <View className="gap-1">
+      <Label nativeID="email">Email</Label>
+      <Input
+        placeholder="abc@example.com"
+        autoComplete="email"
+        autoCapitalize="none"
+        value={email}
+        onChangeText={handleEmailChange}
+        keyboardType="email-address"
+        className={isSuccess ? "" : "border-destructive"}
+      />
+      {isSuccess ? null : (
+        <View className=" flex flex-row items-center gap-1 ">
+          <CircleAlert className="text-destructive" size={12} />
+          <Text className="text-sm text-destructive">
+            {emailParseResult?.issues?.[0]?.message}
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+});
+
+type PasswordInputProps = {
+  password: string;
+  setPassword: (email: string) => void;
+  passwordParseResult: SafeParseResult<typeof passwordSchema> | null;
+  setPasswordParseResult: (
+    passwordParseResult: SafeParseResult<typeof passwordSchema> | null
+  ) => void;
+  confirmPassword: string;
+  setPasswordMatch: (passwordMatch: boolean | null) => void;
+};
+
+const PasswordInput = memo(function PasswordInput(props: PasswordInputProps) {
+  const {
+    password,
+    setPassword,
+    passwordParseResult,
+    setPasswordParseResult,
+    confirmPassword,
+    setPasswordMatch,
+  } = props;
+
+  const handlePasswordChange = useCallback(
+    (text: string) => {
+      setPassword(text);
+      const result = v.safeParse(passwordSchema, text);
+      setPasswordParseResult(result);
+      setPasswordMatch(confirmPassword === text);
+    },
+    [setPassword, setPasswordParseResult, setPasswordMatch, confirmPassword]
+  );
+
+  const isSuccess = useMemo(() => {
+    return passwordParseResult === null || passwordParseResult.success;
+  }, [passwordParseResult]);
+
+  return (
+    <View className="gap-1">
+      <Label nativeID="password">Password</Label>
+      <Input
+        placeholder="Enter password"
+        autoCapitalize="none"
+        value={password}
+        onChangeText={handlePasswordChange}
+        secureTextEntry
+        className={isSuccess ? "" : "border-destructive"}
+      />
+      {isSuccess ? null : (
+        <View className=" flex flex-row items-center gap-1 ">
+          <CircleAlert className="text-destructive" size={12} />
+          <Text className="text-sm text-destructive">
+            {passwordParseResult?.issues?.[0]?.message}
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+});
+
+type ConfirmPasswordInputProps = {
+  password: string;
+  confirmPassword: string;
+  setConfirmPassword: (email: string) => void;
+  passwordMatch: boolean | null;
+  setPasswordMatch: (passwordMatch: boolean | null) => void;
+};
+
+const ConfirmPasswordInput = memo(function ConfirmPasswordInput(
+  props: ConfirmPasswordInputProps
+) {
+  const {
+    password,
+    confirmPassword,
+    setConfirmPassword,
+    passwordMatch,
+    setPasswordMatch,
+  } = props;
+
+  const handleConfirmPasswordChange = useCallback(
+    (text: string) => {
+      setConfirmPassword(text);
+      setPasswordMatch(password === text);
+    },
+    [setConfirmPassword, setPasswordMatch, password]
+  );
+
+  const isSuccess = useMemo(() => {
+    return passwordMatch === null || passwordMatch === true;
+  }, [passwordMatch]);
+
+  return (
+    <View className="gap-1">
+      <Label nativeID="confirm password">Confirm Password</Label>
+      <Input
+        placeholder="Enter password"
+        autoCapitalize="none"
+        value={confirmPassword}
+        onChangeText={handleConfirmPasswordChange}
+        secureTextEntry
+        className={isSuccess ? "" : "border-destructive"}
+      />
+      {isSuccess ? null : (
+        <View className=" flex flex-row items-center gap-1 ">
+          <CircleAlert className="text-destructive" size={12} />
+          <Text className="text-sm text-destructive">
+            Passwords do not match
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+});
+
 export default function SignUp() {
   const [email, setEmail] = useState("");
   const [emailParseResult, setEmailParseResult] = useState<SafeParseResult<
     typeof emailSchema
   > | null>(null);
+
   const [password, setPassword] = useState("");
   const [passwordParseResult, setPasswordParseResult] =
     useState<SafeParseResult<typeof passwordSchema> | null>(null);
+
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordMatch, setPasswordMatch] = useState<boolean | null>(null);
 
@@ -56,86 +221,71 @@ export default function SignUp() {
   });
 
   return (
-    <View className="p-8 gap-4 flex">
-      <Text className="text-5xl self-center">Get Started</Text>
-      <View className="gap-1">
-        <Label nativeID="email">Email</Label>
-        <Input
-          placeholder="abc@example.com"
-          autoComplete="email"
-          autoCapitalize="none"
-          value={email}
-          onChangeText={(text) => {
-            setEmail(text.trim());
-            const result = v.safeParse(emailSchema, text.trim());
-            setEmailParseResult(result);
-          }}
-          keyboardType="email-address"
-        />
-        {emailParseResult?.success ? null : (
-          <Text className="text-sm text-destructive">
-            {emailParseResult?.issues[0].message}
-          </Text>
-        )}
-      </View>
-
-      <View className="gap-1">
-        <Label nativeID="password">Password</Label>
-        <Input
-          placeholder="Enter password"
-          autoCapitalize="none"
-          value={password}
-          onChangeText={(text) => {
-            setPassword(text);
-            const result = v.safeParse(passwordSchema, text);
-            setPasswordParseResult(result);
-          }}
-          secureTextEntry
-        />
-        {passwordParseResult?.success ? null : (
-          <Text className="text-sm text-destructive">
-            {passwordParseResult?.issues[0].message}
-          </Text>
-        )}
-      </View>
-
-      <View className="gap-1">
-        <Label nativeID="confirm password">Confirm Password</Label>
-        <Input
-          placeholder="Enter password"
-          autoCapitalize="none"
-          value={confirmPassword}
-          onChangeText={(text) => {
-            setConfirmPassword(text);
-            setPasswordMatch(password === text);
-          }}
-          secureTextEntry
-        />
-        {passwordMatch === null || passwordMatch === true ? null : (
-          <Text className="text-sm text-destructive">
-            Passwords do not match
-          </Text>
-        )}
-      </View>
-
-      <Button
-        disabled={
-          !(
-            emailParseResult?.success &&
-            passwordParseResult?.success &&
-            passwordMatch
-          )
-        }
-        onPress={() => user.mutate({ email, password })}
+    <SafeAreaView className="flex-1">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        className="flex-1"
       >
-        <Text>Sign Up</Text>
-      </Button>
+        <ScrollView className="flex-1">
+          <View className="p-8 gap-4 flex">
+            <Text className="text-5xl self-center">Get Started</Text>
+            <EmailInput
+              email={email}
+              setEmail={(email: string) => setEmail(email)}
+              emailParseResult={emailParseResult}
+              setEmailParseResult={(
+                emailParseResult: SafeParseResult<typeof emailSchema> | null
+              ) => setEmailParseResult(emailParseResult)}
+            />
 
-      {user.data ? (
-        <Text>{user.data.user.email ?? "email"}</Text>
-      ) : (
-        <Text>No user</Text>
-      )}
-    </View>
+            <PasswordInput
+              password={password}
+              setPassword={(password: string) => setPassword(password)}
+              passwordParseResult={passwordParseResult}
+              setPasswordParseResult={(
+                passwordParseResult: SafeParseResult<
+                  typeof passwordSchema
+                > | null
+              ) => setPasswordParseResult(passwordParseResult)}
+              confirmPassword={confirmPassword}
+              setPasswordMatch={(passwordMatch: boolean | null) =>
+                setPasswordMatch(passwordMatch)
+              }
+            />
+
+            <ConfirmPasswordInput
+              password={password}
+              confirmPassword={confirmPassword}
+              setConfirmPassword={(confirmPassword: string) =>
+                setConfirmPassword(confirmPassword)
+              }
+              passwordMatch={passwordMatch}
+              setPasswordMatch={(passwordMatch: boolean | null) =>
+                setPasswordMatch(passwordMatch)
+              }
+            />
+
+            <Button
+              disabled={
+                !(
+                  emailParseResult?.success &&
+                  passwordParseResult?.success &&
+                  passwordMatch
+                )
+              }
+              onPress={() => user.mutate({ email, password })}
+            >
+              <Text>Sign Up</Text>
+            </Button>
+
+            {user.data ? (
+              <Text>{user.data.user.email ?? "email"}</Text>
+            ) : (
+              <Text>No user</Text>
+            )}
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
