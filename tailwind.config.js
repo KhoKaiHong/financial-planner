@@ -1,4 +1,6 @@
 const { hairlineWidth } = require("nativewind/theme");
+const defaultTheme = require("tailwindcss/defaultTheme");
+import { platformSelect } from "nativewind/theme";
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -44,6 +46,26 @@ module.exports = {
       },
       borderWidth: {
         hairline: hairlineWidth(),
+      },
+      fontFamily: {
+        "inter-black": ["inter-black"],
+        "inter-extrabold": ["inter-extrabold"],
+        "inter-bold": ["inter-bold"],
+        "inter-semibold": ["inter-semibold"],
+        "inter-medium": ["inter-medium"],
+        "inter": ["inter"],
+        "inter-light": ["inter-light"],
+        "inter-extralight": ["inter-extralight"],
+        "inter-thin": ["inter-thin"],
+        "inter-black-italic": ["inter-black-italic"],
+        "inter-extrabold-italic": ["inter-extrabold-italic"],
+        "inter-bold-italic": ["inter-bold-italic"],
+        "inter-semibold-italic": ["inter-semibold-italic"],
+        "inter-medium-italic": ["inter-medium-italic"],
+        "inter-italic": ["inter-italic"],
+        "inter-light-italic": ["inter-light-italic"],
+        "inter-extralight-italic": ["inter-extralight-italic"],
+        "inter-thin-italic": ["inter-thin-italic"],
       },
     },
   },
