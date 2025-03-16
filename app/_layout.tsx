@@ -15,6 +15,9 @@ import { useColorScheme } from "~/lib/useColorScheme";
 import { DevToolsBubble } from "react-native-react-query-devtools";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
+import * as SplashScreen from "expo-splash-screen";
+import { useEffect } from "react";
+import { useFonts } from "expo-font";
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -25,15 +28,40 @@ const DARK_THEME: Theme = {
   colors: NAV_THEME.dark,
 };
 
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from "expo-router";
+export { ErrorBoundary } from "expo-router";
+
+SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const hasMounted = React.useRef(false);
   const { isDarkColorScheme } = useColorScheme();
   const [isColorSchemeLoaded, setIsColorSchemeLoaded] = React.useState(false);
+  const [fontLoaded, fontError] = useFonts({
+    "inter-black": require("../assets/fonts/Inter-Black.otf"),
+    "inter-black-italic": require("../assets/fonts/Inter-BlackItalic.otf"),
+    "inter-extrabold": require("../assets/fonts/Inter-ExtraBold.otf"),
+    "inter-extrabold-italic": require("../assets/fonts/Inter-ExtraBoldItalic.otf"),
+    "inter-bold": require("../assets/fonts/Inter-Bold.otf"),
+    "inter-bold-italic": require("../assets/fonts/Inter-BoldItalic.otf"),
+    "inter-semibold": require("../assets/fonts/Inter-SemiBold.otf"),
+    "inter-semibold-italic": require("../assets/fonts/Inter-SemiBoldItalic.otf"),
+    "inter-medium": require("../assets/fonts/Inter-Medium.otf"),
+    "inter-medium-italic": require("../assets/fonts/Inter-MediumItalic.otf"),
+    inter: require("../assets/fonts/Inter-Regular.otf"),
+    "inter-italic": require("../assets/fonts/Inter-Italic.otf"),
+    "inter-light": require("../assets/fonts/Inter-Light.otf"),
+    "inter-light-italic": require("../assets/fonts/Inter-LightItalic.otf"),
+    "inter-extralight": require("../assets/fonts/Inter-ExtraLight.otf"),
+    "inter-extralight-italic": require("../assets/fonts/Inter-ExtraLightItalic.otf"),
+    "inter-thin": require("../assets/fonts/Inter-Thin.otf"),
+    "inter-thin-italic": require("../assets/fonts/Inter-ThinItalic.otf"),
+  });
+
+  useEffect(() => {
+    if (fontLoaded || fontError) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontLoaded, fontError]);
 
   const queryClient = new QueryClient();
 
@@ -59,6 +87,10 @@ export default function RootLayout() {
     hasMounted.current = true;
   }, []);
 
+  if (!fontLoaded && !fontError) {
+    return null;
+  }
+
   if (!isColorSchemeLoaded) {
     return null;
   }
@@ -68,8 +100,22 @@ export default function RootLayout() {
       <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
         <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
         <Stack>
-          <Stack.Screen name="index" options={{ headerTitle: "Login" }} />
-          <Stack.Screen name="signup" options={{ headerTitle: "Sign Up" }} />
+          <Stack.Screen
+            name="index"
+            options={{
+              headerTitle: "Login",
+              headerTitleStyle: { fontFamily: "inter-medium" },
+              headerTitleAlign: "center",
+            }}
+          />
+          <Stack.Screen
+            name="signup"
+            options={{
+              headerTitle: "Sign Up",
+              headerTitleStyle: { fontFamily: "inter-medium" },
+              headerTitleAlign: "center",
+            }}
+          />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         </Stack>
       </ThemeProvider>

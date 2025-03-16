@@ -10,7 +10,14 @@
       "output": "server"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-font",
+      [
+        "expo-asset",
+        {
+          "assets": ["./assets/icons/google.svg"]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
