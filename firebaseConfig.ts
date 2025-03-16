@@ -1,12 +1,9 @@
-// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { initializeAuth, getReactNativePersistence } from "firebase/auth";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+import { getFirestore } from "firebase/firestore"; // Import Firestore
+import { initializeAuth } from "firebase/auth"; // Remove getReactNativePersistence
+import AsyncStorage from "@react-native-async-storage/async-storage"; // Still needed for your React Native app
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyClVQFcOfP1vF6gMok0xJozWXHZ9iZ1bTA",
   authDomain: "financial-planner-2edb6.firebaseapp.com",
@@ -19,6 +16,9 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-export const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(AsyncStorage),
-});
+
+// Only enable Auth persistence in a React Native environment, NOT in Node.js
+export const auth = initializeAuth(app); // Removed persistence here
+
+// Initialize Firestore and Export `db`
+export const db = getFirestore(app);
