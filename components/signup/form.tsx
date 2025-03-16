@@ -60,9 +60,7 @@ const EmailInput = memo(function EmailInput(props: EmailInputProps) {
     [setEmail, setEmailParseResult]
   );
 
-  const isSuccess = useMemo(() => {
-    return emailParseResult === null || emailParseResult.success;
-  }, [emailParseResult]);
+  const isSuccess = emailParseResult === null || emailParseResult.success;
 
   return (
     <View className="gap-1">
@@ -119,9 +117,7 @@ const PasswordInput = memo(function PasswordInput(props: PasswordInputProps) {
     [setPassword, setPasswordParseResult, setPasswordMatch, confirmPassword]
   );
 
-  const isSuccess = useMemo(() => {
-    return passwordParseResult === null || passwordParseResult.success;
-  }, [passwordParseResult]);
+  const isSuccess = passwordParseResult === null || passwordParseResult.success;
 
   return (
     <View className="gap-1">
@@ -173,9 +169,7 @@ const ConfirmPasswordInput = memo(function ConfirmPasswordInput(
     [setConfirmPassword, setPasswordMatch, password]
   );
 
-  const isSuccess = useMemo(() => {
-    return passwordMatch === null || passwordMatch === true;
-  }, [passwordMatch]);
+  const isSuccess = passwordMatch === null || passwordMatch === true;
 
   return (
     <View className="gap-1">
@@ -220,40 +214,72 @@ export function SignUpForm() {
     },
   });
 
+  const handleEmail = useCallback(
+    (email: string) => {
+      setEmail(email);
+    },
+    [setEmail]
+  );
+
+  const handleEmailParseResult = useCallback(
+    (emailParseResult: SafeParseResult<typeof emailSchema> | null) => {
+      setEmailParseResult(emailParseResult);
+    },
+    [setEmailParseResult]
+  );
+
+  const handlePassword = useCallback(
+    (password: string) => {
+      setPassword(password);
+    },
+    [setPassword]
+  );
+
+  const handlePasswordParseResult = useCallback(
+    (passwordParseResult: SafeParseResult<typeof passwordSchema> | null) => {
+      setPasswordParseResult(passwordParseResult);
+    },
+    [setPasswordParseResult]
+  );
+
+  const handleConfirmPassword = useCallback(
+    (confirmPassword: string) => {
+      setConfirmPassword(confirmPassword);
+    },
+    [setConfirmPassword]
+  );
+
+  const handlePasswordMatch = useCallback(
+    (passwordMatch: boolean | null) => {
+      setPasswordMatch(passwordMatch);
+    },
+    [setPasswordMatch]
+  );
+
   return (
     <View className="gap-4">
       <EmailInput
         email={email}
-        setEmail={(email: string) => setEmail(email)}
+        setEmail={handleEmail}
         emailParseResult={emailParseResult}
-        setEmailParseResult={(
-          emailParseResult: SafeParseResult<typeof emailSchema> | null
-        ) => setEmailParseResult(emailParseResult)}
+        setEmailParseResult={handleEmailParseResult}
       />
 
       <PasswordInput
         password={password}
-        setPassword={(password: string) => setPassword(password)}
+        setPassword={handlePassword}
         passwordParseResult={passwordParseResult}
-        setPasswordParseResult={(
-          passwordParseResult: SafeParseResult<typeof passwordSchema> | null
-        ) => setPasswordParseResult(passwordParseResult)}
+        setPasswordParseResult={handlePasswordParseResult}
         confirmPassword={confirmPassword}
-        setPasswordMatch={(passwordMatch: boolean | null) =>
-          setPasswordMatch(passwordMatch)
-        }
+        setPasswordMatch={handlePasswordMatch}
       />
 
       <ConfirmPasswordInput
         password={password}
         confirmPassword={confirmPassword}
-        setConfirmPassword={(confirmPassword: string) =>
-          setConfirmPassword(confirmPassword)
-        }
+        setConfirmPassword={handleConfirmPassword}
         passwordMatch={passwordMatch}
-        setPasswordMatch={(passwordMatch: boolean | null) =>
-          setPasswordMatch(passwordMatch)
-        }
+        setPasswordMatch={handlePasswordMatch}
       />
 
       <Button
@@ -265,6 +291,7 @@ export function SignUpForm() {
           )
         }
         onPress={() => user.mutate({ email, password })}
+        className="mt-4"
       >
         <Text>Sign Up</Text>
       </Button>

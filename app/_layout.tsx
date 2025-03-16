@@ -18,6 +18,7 @@ import * as Clipboard from "expo-clipboard";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { useFonts } from "expo-font";
+import { PortalHost } from '@rn-primitives/portal';
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -118,6 +119,7 @@ export default function RootLayout() {
           />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         </Stack>
+        <PortalHost />
       </ThemeProvider>
       <DevToolsBubble onCopy={onCopy} />
     </QueryClientProvider>
