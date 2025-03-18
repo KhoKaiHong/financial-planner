@@ -5,10 +5,21 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { SignUpForm } from "~/components/signup/form";
 import { SignUpProviders } from "~/components/signup/providers";
 import { Link } from "expo-router";
+import { LoadingCircle } from "~/components/loading-circle";
+import { useCallback, useState } from "react";
 
 export default function SignUp() {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const setLoadingState = useCallback(
+    (isLoading: boolean) => {
+      setIsLoading(isLoading);
+    },
+    [setIsLoading]
+  );
+
   return (
-    <SafeAreaView className="flex-1">
+    <SafeAreaView className={"flex-1"}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         className="flex-1"
@@ -18,7 +29,7 @@ export default function SignUp() {
           contentContainerStyle={{
             flexGrow: 1,
             justifyContent: "space-between",
-            gap: 20
+            gap: 20,
           }}
         >
           <View className="px-8 flex flex-col gap-4">
@@ -26,7 +37,7 @@ export default function SignUp() {
               Get Started
             </Text>
 
-            <SignUpForm />
+            <SignUpForm setLoadingState={setLoadingState} />
 
             <View className="flex flex-row items-center gap-3">
               <Separator orientation="horizontal" className="flex-1" />
@@ -42,12 +53,17 @@ export default function SignUp() {
             <Text className="text-muted-foreground">
               Already have an account?&nbsp;
             </Text>
-            <Link href="/" className="text-blue-500">
+            <Link href="/" className="text-blue-500" replace={true}>
               Log in.
             </Link>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      {isLoading && (
+        <View className="absolute inset-0 flex justify-center items-center w-full h-full bg-background">
+          <LoadingCircle size={60} />
+        </View>
+      )}
     </SafeAreaView>
   );
 }

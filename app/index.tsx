@@ -9,8 +9,12 @@ import { Link } from "expo-router";
 export default function Login() {
   return (
     <View className="flex-1 items-center justify-center gap-y-2">
-      <Link href="/home" className="text-muted-foreground">Hello</Link>
-      <Link href="/signup" className="text-muted-foreground">Hello</Link>
+      <Link href="/home" className="text-muted-foreground" replace={true}>
+        Hello
+      </Link>
+      <Link href="/signup" className="text-muted-foreground" replace={true}>
+        Hello
+      </Link>
     </View>
   );
 }
