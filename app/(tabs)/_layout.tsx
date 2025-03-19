@@ -45,6 +45,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ color }) => <User size={20} color={color} />,
         }}
       />
+      <Tabs.Screen name="transaction-history" options={{ title: 'Transactions' }} />
     </Tabs>
   );
 }
