@@ -18,6 +18,8 @@ import * as Clipboard from "expo-clipboard";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { useFonts } from "expo-font";
+import { PortalHost } from "@rn-primitives/portal";
+import { ColorSchemeToggle } from "~/components/color-scheme-toggle";
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -99,7 +101,7 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
         <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
-        <Stack>
+        <Stack screenOptions={{ headerRight: () => <ColorSchemeToggle /> }}>
           <Stack.Screen
             name="index"
             options={{
@@ -118,6 +120,7 @@ export default function RootLayout() {
           />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         </Stack>
+        <PortalHost />
       </ThemeProvider>
       <DevToolsBubble onCopy={onCopy} />
     </QueryClientProvider>

@@ -2,14 +2,31 @@ import { View } from "react-native";
 import { Text } from "~/components/ui/text";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, UserCredential } from "firebase/auth";
 import { auth } from "~/firebaseConfig";
 import { useState, memo, useCallback, useMemo } from "react";
-import { useMutation } from "@tanstack/react-query";
+import {
+  UseMutateFunction,
+  useMutation,
+  UseMutationResult,
+} from "@tanstack/react-query";
 import { Button } from "~/components/ui/button";
 import * as v from "valibot";
 import { SafeParseResult } from "valibot";
 import { CircleAlert } from "~/lib/icons/CircleAlert";
+import { useRouter } from "expo-router";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "~/components/ui/alert-dialog";
+import { FirebaseError } from "firebase/app";
 
 async function register(email: string, password: string) {
   return await createUserWithEmailAndPassword(auth, email, password);
@@ -60,9 +77,7 @@ const EmailInput = memo(function EmailInput(props: EmailInputProps) {
     [setEmail, setEmailParseResult]
   );
 
-  const isSuccess = useMemo(() => {
-    return emailParseResult === null || emailParseResult.success;
-  }, [emailParseResult]);
+  const isSuccess = emailParseResult === null || emailParseResult.success;
 
   return (
     <View className="gap-1">
@@ -119,9 +134,7 @@ const PasswordInput = memo(function PasswordInput(props: PasswordInputProps) {
     [setPassword, setPasswordParseResult, setPasswordMatch, confirmPassword]
   );
 
-  const isSuccess = useMemo(() => {
-    return passwordParseResult === null || passwordParseResult.success;
-  }, [passwordParseResult]);
+  const isSuccess = passwordParseResult === null || passwordParseResult.success;
 
   return (
     <View className="gap-1">
@@ -173,9 +186,7 @@ const ConfirmPasswordInput = memo(function ConfirmPasswordInput(
     [setConfirmPassword, setPasswordMatch, password]
   );
 
-  const isSuccess = useMemo(() => {
-    return passwordMatch === null || passwordMatch === true;
-  }, [passwordMatch]);
+  const isSuccess = passwordMatch === null || passwordMatch === true;
 
   return (
     <View className="gap-1">
@@ -200,7 +211,15 @@ const ConfirmPasswordInput = memo(function ConfirmPasswordInput(
   );
 });
 
-export function SignUpForm() {
+type SignUpFormProps = {
+  setLoadingState: (isLoading: boolean) => void;
+};
+
+export function SignUpForm(props: SignUpFormProps) {
+  const { setLoadingState } = props;
+
+  const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [emailParseResult, setEmailParseResult] = useState<SafeParseResult<
     typeof emailSchema
@@ -213,47 +232,83 @@ export function SignUpForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordMatch, setPasswordMatch] = useState<boolean | null>(null);
 
-  const user = useMutation({
+  const registerMutation = useMutation({
     mutationFn: (input: signUpInput) => register(input.email, input.password),
-    onError(error, variables, context) {
-      console.log(error);
-    },
+    onSettled: () => setLoadingState(false),
+    onSuccess: () => router.replace("/verify"),
   });
+
+  const handleEmail = useCallback(
+    (email: string) => {
+      setEmail(email);
+    },
+    [setEmail]
+  );
+
+  const handleEmailParseResult = useCallback(
+    (emailParseResult: SafeParseResult<typeof emailSchema> | null) => {
+      setEmailParseResult(emailParseResult);
+    },
+    [setEmailParseResult]
+  );
+
+  const handlePassword = useCallback(
+    (password: string) => {
+      setPassword(password);
+    },
+    [setPassword]
+  );
+
+  const handlePasswordParseResult = useCallback(
+    (passwordParseResult: SafeParseResult<typeof passwordSchema> | null) => {
+      setPasswordParseResult(passwordParseResult);
+    },
+    [setPasswordParseResult]
+  );
+
+  const handleConfirmPassword = useCallback(
+    (confirmPassword: string) => {
+      setConfirmPassword(confirmPassword);
+    },
+    [setConfirmPassword]
+  );
+
+  const handlePasswordMatch = useCallback(
+    (passwordMatch: boolean | null) => {
+      setPasswordMatch(passwordMatch);
+    },
+    [setPasswordMatch]
+  );
+
+  const onButtonPress = useCallback(() => {
+    setLoadingState(true);
+    registerMutation.mutate({ email, password });
+  }, [email, password, registerMutation, setLoadingState]);
 
   return (
     <View className="gap-4">
       <EmailInput
         email={email}
-        setEmail={(email: string) => setEmail(email)}
+        setEmail={handleEmail}
         emailParseResult={emailParseResult}
-        setEmailParseResult={(
-          emailParseResult: SafeParseResult<typeof emailSchema> | null
-        ) => setEmailParseResult(emailParseResult)}
+        setEmailParseResult={handleEmailParseResult}
       />
 
       <PasswordInput
         password={password}
-        setPassword={(password: string) => setPassword(password)}
+        setPassword={handlePassword}
         passwordParseResult={passwordParseResult}
-        setPasswordParseResult={(
-          passwordParseResult: SafeParseResult<typeof passwordSchema> | null
-        ) => setPasswordParseResult(passwordParseResult)}
+        setPasswordParseResult={handlePasswordParseResult}
         confirmPassword={confirmPassword}
-        setPasswordMatch={(passwordMatch: boolean | null) =>
-          setPasswordMatch(passwordMatch)
-        }
+        setPasswordMatch={handlePasswordMatch}
       />
 
       <ConfirmPasswordInput
         password={password}
         confirmPassword={confirmPassword}
-        setConfirmPassword={(confirmPassword: string) =>
-          setConfirmPassword(confirmPassword)
-        }
+        setConfirmPassword={handleConfirmPassword}
         passwordMatch={passwordMatch}
-        setPasswordMatch={(passwordMatch: boolean | null) =>
-          setPasswordMatch(passwordMatch)
-        }
+        setPasswordMatch={handlePasswordMatch}
       />
 
       <Button
@@ -264,10 +319,38 @@ export function SignUpForm() {
             passwordMatch
           )
         }
-        onPress={() => user.mutate({ email, password })}
+        onPress={onButtonPress}
+        className="mt-4"
       >
         <Text>Sign Up</Text>
       </Button>
+
+      <AlertDialog
+        open={
+          registerMutation.error instanceof FirebaseError &&
+          registerMutation.error.code === "auth/email-already-in-use"
+        }
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Email already in use</AlertDialogTitle>
+            <AlertDialogDescription className="text-foreground">
+              Press OK to login.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              onPress={() => {
+                registerMutation.reset();
+                router.dismissAll();
+                router.replace("/");
+              }}
+            >
+              <Text>Ok</Text>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </View>
   );
 }

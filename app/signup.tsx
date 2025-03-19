@@ -1,26 +1,43 @@
 import { KeyboardAvoidingView, View, ScrollView, Platform } from "react-native";
 import { Text } from "~/components/ui/text";
-import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { GoogleSvg } from "~/components/signup/google";
 import { SignUpForm } from "~/components/signup/form";
+import { SignUpProviders } from "~/components/signup/providers";
+import { Link } from "expo-router";
+import { LoadingCircle } from "~/components/loading-circle";
+import { useCallback, useState } from "react";
 
 export default function SignUp() {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const setLoadingState = useCallback(
+    (isLoading: boolean) => {
+      setIsLoading(isLoading);
+    },
+    [setIsLoading]
+  );
+
   return (
-    <SafeAreaView className="flex-1">
+    <SafeAreaView className={"flex-1"}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         className="flex-1"
       >
-        <ScrollView className="flex-1">
-          <View className="p-8 gap-8 flex">
-
-            <Text className="text-5xl self-center font-inter-thin">
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: "space-between",
+            gap: 20,
+          }}
+        >
+          <View className="px-8 flex flex-col gap-4">
+            <Text className="py-16 text-5xl self-center font-inter-thin">
               Get Started
             </Text>
 
-            <SignUpForm />
+            <SignUpForm setLoadingState={setLoadingState} />
 
             <View className="flex flex-row items-center gap-3">
               <Separator orientation="horizontal" className="flex-1" />
@@ -30,14 +47,23 @@ export default function SignUp() {
               <Separator orientation="horizontal" className="flex-1" />
             </View>
 
-            <View className="flex items-center">
-              <Button size={"icon"} className="rounded-full p-6">
-                <GoogleSvg />
-              </Button>
-            </View>
+            <SignUpProviders />
+          </View>
+          <View className="flex flex-row justify-center pb-8">
+            <Text className="text-muted-foreground">
+              Already have an account?&nbsp;
+            </Text>
+            <Link href="/" className="text-blue-500" replace={true}>
+              Log in.
+            </Link>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      {isLoading && (
+        <View className="absolute inset-0 flex justify-center items-center w-full h-full bg-background">
+          <LoadingCircle size={60} />
+        </View>
+      )}
     </SafeAreaView>
   );
 }
