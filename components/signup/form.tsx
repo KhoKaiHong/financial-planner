@@ -342,7 +342,6 @@ export function SignUpForm(props: SignUpFormProps) {
             <AlertDialogAction
               onPress={() => {
                 registerMutation.reset();
-                router.dismissAll();
                 router.replace("/");
               }}
             >

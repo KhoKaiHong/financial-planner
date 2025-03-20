@@ -7,6 +7,7 @@ import { SignUpProviders } from "~/components/signup/providers";
 import { Link } from "expo-router";
 import { LoadingCircle } from "~/components/loading-circle";
 import { useCallback, useState } from "react";
+import { auth } from "~/firebaseConfig";
 
 export default function SignUp() {
   const [isLoading, setIsLoading] = useState(false);
@@ -19,7 +20,7 @@ export default function SignUp() {
   );
 
   return (
-    <SafeAreaView className={"flex-1"}>
+    <SafeAreaView className="flex-1">
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         className="flex-1"
@@ -60,7 +61,7 @@ export default function SignUp() {
         </ScrollView>
       </KeyboardAvoidingView>
       {isLoading && (
-        <View className="absolute inset-0 flex justify-center items-center w-full h-full bg-background">
+        <View className="absolute flex justify-center items-center w-full h-full bg-background">
           <LoadingCircle size={60} />
         </View>
       )}

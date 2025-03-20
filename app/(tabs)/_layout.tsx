@@ -5,6 +5,8 @@ import { User } from "~/lib/icons/User";
 import { useColorScheme } from "~/lib/useColorScheme";
 import { useRouter } from "expo-router";
 import { auth } from "~/firebaseConfig";
+import { ColorSchemeToggle } from "~/components/color-scheme-toggle";
+import { NAV_THEME } from "~/lib/constants";
 
 export default function TabsLayout() {
   const { isDarkColorScheme } = useColorScheme();
@@ -18,13 +20,17 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: isDarkColorScheme ? "white" : "black",
+        tabBarActiveTintColor: isDarkColorScheme ? NAV_THEME.dark.primary : NAV_THEME.light.primary,
+        tabBarLabelStyle: { fontFamily: "inter-medium", fontSize: 11 },
+        headerRight: () => <ColorSchemeToggle />
       }}
     >
       <Tabs.Screen
         name="home"
         options={{
           headerTitle: "Home",
+          headerTitleStyle: { fontFamily: "inter-medium" },
+          headerTitleAlign: "center",
           title: "Home",
           tabBarIcon: ({ color }) => <House size={20} color={color} />,
         }}
@@ -33,6 +39,8 @@ export default function TabsLayout() {
         name="settings"
         options={{
           headerTitle: "Settings",
+          headerTitleStyle: { fontFamily: "inter-medium" },
+          headerTitleAlign: "center",
           title: "Settings",
           tabBarIcon: ({ color }) => <Settings size={20} color={color} />,
         }}
@@ -42,6 +50,8 @@ export default function TabsLayout() {
         options={{
           headerTitle: "Profile",
           title: "Profile",
+          headerTitleStyle: { fontFamily: "inter-medium" },
+          headerTitleAlign: "center",
           tabBarIcon: ({ color }) => <User size={20} color={color} />,
         }}
       />

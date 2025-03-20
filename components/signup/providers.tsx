@@ -6,7 +6,7 @@ export function SignUpProviders() {
   return (
     <View className="flex items-center">
       <Button size={"icon"} className="rounded-full p-6">
-        <GoogleSvg />
+        <GoogleSvg width={24} height={24} />
       </Button>
     </View>
   );
