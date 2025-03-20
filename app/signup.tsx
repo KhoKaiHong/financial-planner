@@ -65,6 +65,7 @@ export default function SignUp() {
           <LoadingCircle size={60} />
         </View>
       )}
+      <Text>{auth.currentUser?.email}</Text>
     </SafeAreaView>
   );
 }
