@@ -34,7 +34,7 @@ export function LoadingCircle({ size }: { size: number }) {
 
   return (
     <Animated.View style={animatedStyle}>
-      <LoaderCircle size={size} className="text-foreground" />
+      <LoaderCircle size={size} className="text-primary" />
     </Animated.View>
   );
 }
