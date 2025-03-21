@@ -47,6 +47,7 @@ export default function Verify() {
   const reloadUserMutation = useMutation({
     mutationKey: ["reloadUser"],
     mutationFn: reloadUser,
+    retry: 5,
   });
 
   useEffect(() => {
@@ -108,7 +109,8 @@ export default function Verify() {
             className="w-64"
             onPress={() => {
               reloadUserMutation.mutate(undefined, {
-                onSuccess: () => router.replace("/"),
+                onSuccess: () => router.replace("/home"),
+                onError: () => router.replace("/error"),
               });
             }}
           >

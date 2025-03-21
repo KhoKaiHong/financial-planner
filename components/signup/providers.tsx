@@ -1,6 +1,6 @@
 import { View } from "react-native";
 import { Button } from "~/components/ui/button";
-import { GoogleSvg } from "./google";
+import { GoogleSvg } from "~/components/google";
 
 export function SignUpProviders() {
   return (
