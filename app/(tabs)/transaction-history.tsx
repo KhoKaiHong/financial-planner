@@ -3,7 +3,6 @@ import { View, FlatList, ActivityIndicator } from "react-native";
 import { Text } from "~/components/ui/text";
 import { db } from "../../firebaseConfig"; // Ensure correct path to firebaseConfig.ts
 import { collection, getDocs } from "firebase/firestore";
-import { Picker } from "@react-native-picker/picker";
 import { doc, updateDoc } from "firebase/firestore";
 // import * as tf from "@tensorflow/tfjs"; // TensorFlow.js for K-Means
 
@@ -139,7 +138,7 @@ export default function TransactionHistoryScreen() {
             </Text>
 
             {/* Category Picker */}
-            <Picker
+            {/* <Picker
               selectedValue={item.category}
               onValueChange={(value) => updateCategory(item.id, value)}
             >
@@ -149,7 +148,7 @@ export default function TransactionHistoryScreen() {
               <Picker.Item label="Transportation" value="Transportation" />
               <Picker.Item label="Shopping" value="Shopping" />
               <Picker.Item label="Bills" value="Bills" />
-            </Picker>
+            </Picker> */}
 
             {/* Display warning if abnormal spending detected */}
             {item.isAbnormal && (

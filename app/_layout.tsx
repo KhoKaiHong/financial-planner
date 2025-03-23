@@ -118,6 +118,22 @@ export default function RootLayout() {
               headerTitleAlign: "center",
             }}
           />
+          <Stack.Screen
+            name="verify"
+            options={{
+              headerTitle: "Verify Your Email",
+              headerTitleStyle: { fontFamily: "inter-medium" },
+              headerTitleAlign: "center",
+            }}
+          />
+          <Stack.Screen
+            name="error"
+            options={{
+              headerTitle: "Error",
+              headerTitleStyle: { fontFamily: "inter-medium" },
+              headerTitleAlign: "center",
+            }}
+          />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         </Stack>
         <PortalHost />

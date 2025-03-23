@@ -1,9 +1,7 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "module": "CommonJS",
     "target": "ESNext",
-    "moduleResolution": "Node",
     "strict": true,
     "baseUrl": ".",
     "paths": {

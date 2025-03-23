@@ -2,13 +2,11 @@ import { View } from "react-native";
 import { Text } from "~/components/ui/text";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { createUserWithEmailAndPassword, UserCredential } from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "~/firebaseConfig";
-import { useState, memo, useCallback, useMemo } from "react";
+import { useState, memo, useCallback } from "react";
 import {
-  UseMutateFunction,
   useMutation,
-  UseMutationResult,
 } from "@tanstack/react-query";
 import { Button } from "~/components/ui/button";
 import * as v from "valibot";
@@ -18,13 +16,11 @@ import { useRouter } from "expo-router";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "~/components/ui/alert-dialog";
 import { FirebaseError } from "firebase/app";
 
@@ -105,7 +101,7 @@ const EmailInput = memo(function EmailInput(props: EmailInputProps) {
 
 type PasswordInputProps = {
   password: string;
-  setPassword: (email: string) => void;
+  setPassword: (password: string) => void;
   passwordParseResult: SafeParseResult<typeof passwordSchema> | null;
   setPasswordParseResult: (
     passwordParseResult: SafeParseResult<typeof passwordSchema> | null
@@ -162,7 +158,7 @@ const PasswordInput = memo(function PasswordInput(props: PasswordInputProps) {
 type ConfirmPasswordInputProps = {
   password: string;
   confirmPassword: string;
-  setConfirmPassword: (email: string) => void;
+  setConfirmPassword: (password: string) => void;
   passwordMatch: boolean | null;
   setPasswordMatch: (passwordMatch: boolean | null) => void;
 };
@@ -342,7 +338,6 @@ export function SignUpForm(props: SignUpFormProps) {
             <AlertDialogAction
               onPress={() => {
                 registerMutation.reset();
-                router.dismissAll();
                 router.replace("/");
               }}
             >
