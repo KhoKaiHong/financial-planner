@@ -232,6 +232,10 @@ export function SignUpForm(props: SignUpFormProps) {
     mutationFn: (input: signUpInput) => register(input.email, input.password),
     onSettled: () => setLoadingState(false),
     onSuccess: () => router.replace("/verify"),
+    onError: (err) => {
+      console.error("Sign-up failed:", err);
+    }
+    
   });
 
   const handleEmail = useCallback(
