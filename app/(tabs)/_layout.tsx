@@ -2,6 +2,7 @@ import { Redirect, Tabs } from "expo-router";
 import { House } from "~/lib/icons/House";
 import { Settings } from "~/lib/icons/Settings";
 import { User } from "~/lib/icons/User";
+import { MapPinned } from "~/lib/icons/MapPinned";
 import { useColorScheme } from "~/lib/useColorScheme";
 import { useRouter } from "expo-router";
 import { auth } from "~/firebaseConfig";
@@ -20,9 +21,11 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: isDarkColorScheme ? NAV_THEME.dark.primary : NAV_THEME.light.primary,
+        tabBarActiveTintColor: isDarkColorScheme
+          ? NAV_THEME.dark.primary
+          : NAV_THEME.light.primary,
         tabBarLabelStyle: { fontFamily: "inter-medium", fontSize: 11 },
-        headerRight: () => <ColorSchemeToggle />
+        headerRight: () => <ColorSchemeToggle />,
       }}
     >
       <Tabs.Screen
@@ -55,7 +58,20 @@ export default function TabsLayout() {
           tabBarIcon: ({ color }) => <User size={20} color={color} />,
         }}
       />
-      <Tabs.Screen name="transaction-history" options={{ title: 'Transactions' }} />
+      <Tabs.Screen
+        name="maps"
+        options={{
+          headerTitle: "Maps",
+          title: "Maps",
+          headerTitleStyle: { fontFamily: "inter-medium" },
+          headerTitleAlign: "center",
+          tabBarIcon: ({ color }) => <MapPinned size={20} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="transaction-history"
+        options={{ title: "Transactions" }}
+      />
     </Tabs>
   );
 }

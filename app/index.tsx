@@ -7,14 +7,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LoginForm } from "~/components/login/form";
 import { useCallback, useState } from "react";
 import { LoadingCircle } from "~/components/loading-circle";
+import { UnverifiedDialog } from "~/components/login/unverified-dialog";
 
 export default function Login() {
   if (auth.currentUser && auth.currentUser.emailVerified) {
     return <Redirect href="/home" />;
-  }
-
-  if (auth.currentUser && !auth.currentUser.emailVerified) {
-    return <Redirect href="/verify" />;
   }
 
   const [isLoading, setIsLoading] = useState(false);
@@ -40,15 +37,8 @@ export default function Login() {
             gap: 20,
           }}
         >
-          <View className="px-8 flex flex-col gap-4">
-            <Link
-              href="/error"
-              className="text-muted-foreground"
-              replace={true}
-            >
-              Hello
-            </Link>
-            <Text className="py-16 text-5xl self-center font-inter-thin">
+          <View className="px-8 flex flex-col gap-20">
+            <Text className="py-32 text-5xl self-center font-inter-thin">
               Log In
             </Text>
             <LoginForm setLoadingState={setLoadingState} />
@@ -61,6 +51,8 @@ export default function Login() {
               Register Now.
             </Link>
           </View>
+
+          <UnverifiedDialog setLoadingState={setLoadingState} />
         </ScrollView>
       </KeyboardAvoidingView>
       {isLoading && (

@@ -2,12 +2,10 @@ import { View } from "react-native";
 import { Text } from "~/components/ui/text";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth } from "~/firebaseConfig";
 import { useState, memo, useCallback } from "react";
-import {
-  useMutation,
-} from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { Button } from "~/components/ui/button";
 import * as v from "valibot";
 import { SafeParseResult } from "valibot";
@@ -24,9 +22,22 @@ import {
 } from "~/components/ui/alert-dialog";
 import { FirebaseError } from "firebase/app";
 
-async function register(email: string, password: string) {
-  return await createUserWithEmailAndPassword(auth, email, password);
+async function register(username: string, email: string, password: string) {
+  await createUserWithEmailAndPassword(auth, email, password);
+  if (auth.currentUser) {
+    await updateProfile(auth.currentUser, {
+      displayName: username,
+    });
+  } else {
+    throw new Error("No logged in user.");
+  }
 }
+
+const usernameSchema = v.pipe(
+  v.string(),
+  v.nonEmpty("Please enter your username."),
+  v.maxLength(16, "Your username is too long.")
+);
 
 const emailSchema = v.pipe(
   v.string(),
@@ -45,11 +56,59 @@ const passwordSchema = v.pipe(
 );
 
 const signUpSchema = v.object({
+  username: usernameSchema,
   email: emailSchema,
   password: passwordSchema,
 });
 
 type signUpInput = v.InferInput<typeof signUpSchema>;
+
+type UsernameInputProps = {
+  username: string;
+  setUsername: (username: string) => void;
+  usernameParseResult: SafeParseResult<typeof usernameSchema> | null;
+  setUsernameParseResult: (
+    usernameParseResult: SafeParseResult<typeof usernameSchema> | null
+  ) => void;
+};
+
+const UsernameInput = memo(function UsernameInput(props: UsernameInputProps) {
+  const { username, setUsername, usernameParseResult, setUsernameParseResult } =
+    props;
+
+  const handleUsernameChange = useCallback(
+    (text: string) => {
+      const trimmed = text.trim();
+      setUsername(trimmed);
+      const result = v.safeParse(usernameSchema, trimmed);
+      setUsernameParseResult(result);
+    },
+    [setUsername, setUsernameParseResult]
+  );
+
+  const isSuccess = usernameParseResult === null || usernameParseResult.success;
+
+  return (
+    <View className="gap-1">
+      <Label nativeID="username">Username</Label>
+      <Input
+        placeholder="Enter username"
+        autoCapitalize="none"
+        value={username}
+        onChangeText={handleUsernameChange}
+        className={isSuccess ? "" : "border-destructive"}
+      />
+      {isSuccess ? null : (
+        <View className=" flex flex-row items-center gap-1 ">
+          <CircleAlert className="text-destructive" size={12} />
+          <Text className="text-sm text-destructive">
+            {usernameParseResult?.issues?.[0]?.message}
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+});
 
 type EmailInputProps = {
   email: string;
@@ -216,6 +275,10 @@ export function SignUpForm(props: SignUpFormProps) {
 
   const router = useRouter();
 
+  const [username, setUsername] = useState("");
+  const [usernameParseResult, setUsernameParseResult] =
+    useState<SafeParseResult<typeof usernameSchema> | null>(null);
+
   const [email, setEmail] = useState("");
   const [emailParseResult, setEmailParseResult] = useState<SafeParseResult<
     typeof emailSchema
@@ -229,10 +292,25 @@ export function SignUpForm(props: SignUpFormProps) {
   const [passwordMatch, setPasswordMatch] = useState<boolean | null>(null);
 
   const registerMutation = useMutation({
-    mutationFn: (input: signUpInput) => register(input.email, input.password),
+    mutationFn: (input: signUpInput) =>
+      register(input.username, input.email, input.password),
     onSettled: () => setLoadingState(false),
     onSuccess: () => router.replace("/verify"),
   });
+
+  const handleUsername = useCallback(
+    (username: string) => {
+      setUsername(username);
+    },
+    [setUsername]
+  );
+
+  const handleUsernameParseResult = useCallback(
+    (usernameParseResult: SafeParseResult<typeof usernameSchema> | null) => {
+      setUsernameParseResult(usernameParseResult);
+    },
+    [setUsernameParseResult]
+  );
 
   const handleEmail = useCallback(
     (email: string) => {
@@ -278,11 +356,18 @@ export function SignUpForm(props: SignUpFormProps) {
 
   const onButtonPress = useCallback(() => {
     setLoadingState(true);
-    registerMutation.mutate({ email, password });
+    registerMutation.mutate({ username, email, password });
   }, [email, password, registerMutation, setLoadingState]);
 
   return (
     <View className="gap-4">
+      <UsernameInput
+        username={username}
+        setUsername={handleUsername}
+        usernameParseResult={usernameParseResult}
+        setUsernameParseResult={handleUsernameParseResult}
+      />
+
       <EmailInput
         email={email}
         setEmail={handleEmail}
@@ -310,6 +395,7 @@ export function SignUpForm(props: SignUpFormProps) {
       <Button
         disabled={
           !(
+            usernameParseResult?.success &&
             emailParseResult?.success &&
             passwordParseResult?.success &&
             passwordMatch

@@ -128,6 +128,7 @@ export function LoginForm(props: LoginFormProps) {
   const loginMutation = useMutation({
     mutationFn: (input: { email: string; password: string }) =>
       login(input.email, input.password),
+    mutationKey: ["login"],
     onSettled: () => setLoadingState(false),
     onSuccess: () => router.replace("/home"),
     onError: (error) => {
