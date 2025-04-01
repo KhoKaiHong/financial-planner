@@ -5,11 +5,19 @@ import {
   View,
   TouchableOpacity,
   ScrollView,
+  Animated,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Text } from "~/components/ui/text";
 import { db } from "../../firebaseConfig";
-import { collection, getDocs, onSnapshot, doc } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  getDoc,
+  setDoc,
+  onSnapshot,
+  doc,
+} from "firebase/firestore";
 import { useColorScheme } from "nativewind";
 import {
   DropdownMenu,
@@ -106,6 +114,40 @@ export default function Home() {
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [earnedBadges, setEarnedBadges] = useState<Badge[]>([]);
   const [budgets, setBudgets] = useState<Record<string, number>>({});
+  const [xp, setXp] = useState(0);
+  const [level, setLevel] = useState(1);
+  const [streak, setStreak] = useState(0);
+  const [levelUp, setLevelUp] = useState(false);
+  const [xpGainAmount, setXpGainAmount] = useState<number | null>(null);
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [levelUpAnim] = useState(new Animated.Value(0));
+  const [showLevelUpText, setShowLevelUpText] = useState(false);
+
+  const triggerXpAnimation = (amount: number) => {
+    setXpGainAmount(amount);
+    fadeAnim.setValue(1); // Fully visible
+
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 1000,
+      useNativeDriver: true,
+    }).start(() => {
+      setXpGainAmount(null); // Remove text after fade
+    });
+  };
+
+  const triggerLevelUpAnimation = () => {
+    setShowLevelUpText(true);
+    levelUpAnim.setValue(1); // start fully visible and scaled
+
+    Animated.timing(levelUpAnim, {
+      toValue: 0,
+      duration: 1200,
+      useNativeDriver: true,
+    }).start(() => {
+      setShowLevelUpText(false);
+    });
+  };
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -173,6 +215,67 @@ export default function Home() {
     return () => unsubscribe(); // Clean up listener on unmount or when month changes
   }, [selectedMonth, selectedYear]);
 
+  useEffect(() => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+
+    const userRef = doc(db, "users", uid);
+
+    const updateLoginStreak = async () => {
+      const now = Date.now();
+
+      const snap = await getDoc(userRef);
+      const data = snap.exists() ? snap.data() : {};
+
+      const lastLogin = data.lastLogin || 0;
+      const currentXp = data.xp || 0;
+      const currentStreak = data.streak || 0;
+      const currentLevel = data.level || 1;
+
+      const timeSinceLastLogin = now - lastLogin;
+
+      // If less than 30 seconds passed, skip
+      if (timeSinceLastLogin < 30_000) {
+        setXp(currentXp);
+        setLevel(currentLevel);
+        setStreak(currentStreak);
+        return;
+      }
+
+      const newXp = currentXp + 10;
+      var newLevel =
+        newXp >= currentLevel * 100 ? currentLevel + 1 : currentLevel;
+      if (newXp >= currentLevel * 100) {
+        newLevel += 1;
+        triggerLevelUpAnimation(); // 🔥 use animated version
+      }
+
+      const newStreak = timeSinceLastLogin < 60_000 ? currentStreak + 1 : 1;
+
+      await setDoc(
+        userRef,
+        {
+          lastLogin: now,
+          xp: newXp,
+          level: newLevel,
+          streak: newStreak,
+        },
+        { merge: true }
+      );
+
+      setXp(newXp);
+      triggerXpAnimation(10);
+      setStreak(newStreak);
+      setLevel(newLevel);
+    };
+
+    updateLoginStreak();
+
+    const interval = setInterval(updateLoginStreak, 10_000); // Check every 10 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
   if (loading) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-background">
@@ -190,6 +293,68 @@ export default function Home() {
           paddingBottom: 32,
         }}
       >
+        <View className="mb-4">
+          {xpGainAmount !== null && (
+            <Animated.View
+              style={{
+                position: "absolute",
+                top: -30,
+                alignSelf: "center",
+                opacity: fadeAnim,
+              }}
+              pointerEvents="none"
+            >
+              <Text className="text-green-500 text-lg font-bold">
+                +{xpGainAmount} XP
+              </Text>
+            </Animated.View>
+          )}
+
+          <Text className="text-lg font-semibold text-foreground mb-1">
+            Login Streak: {streak}{" "}
+            {Array(Math.min(streak, 8)).fill("🔥").join("")}
+          </Text>
+
+          <Text className="text-foreground mb-2">
+            🧬 XP: {xp % 100} / {100} — Level {level}
+          </Text>
+
+          <View className="h-3 w-full bg-gray-300 dark:bg-zinc-700 rounded-full overflow-hidden">
+            <View
+              style={{ width: `${((xp % 100) / 100) * 100}%` }}
+              className="h-full bg-indigo-500 rounded-full"
+            />
+          </View>
+        </View>
+
+        {showLevelUpText && (
+          <Animated.View
+            style={{
+              position: "absolute",
+              top: 60,
+              left: 0,
+              right: 0,
+              alignItems: "center",
+              opacity: levelUpAnim,
+              transform: [
+                {
+                  scale: levelUpAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.7, 1.2],
+                  }),
+                },
+              ],
+            }}
+            pointerEvents="none"
+          >
+            <View className="px-6 py-3 bg-yellow-100 dark:bg-yellow-900 rounded-lg border border-yellow-300 dark:border-yellow-700 shadow-md">
+              <Text className="text-yellow-800 dark:text-yellow-200 font-bold text-lg">
+                🎉 Level Up! You’re now Level {level}
+              </Text>
+            </View>
+          </Animated.View>
+        )}
+
         <Text className="text-2xl font-bold mb-2 text-foreground">
           📊 Monthly Dashboard
         </Text>
