@@ -44,6 +44,9 @@ importers:
       '@uidotdev/usehooks':
         specifier: ^2.4.1
         version: 2.4.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@xstate/store':
+        specifier: ^3.4.1
+        version: 3.4.1(react@18.3.1)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -1993,6 +1996,17 @@ packages:
   '@xmldom/xmldom@0.8.10':
     resolution: {integrity: sha512-2WALfTl4xo2SkGCYRt6rDTFfk9R1czmBvUQy12gK2KuRKIpWEhcbbzy8EZXtz/jkRqHX8bFEc6FC1HjX4TUWYw==}
     engines: {node: '>=10.0.0'}
+
+  '@xstate/store@3.4.1':
+    resolution: {integrity: sha512-1nAbGGD45QYSe08eUDv/0dVFt0yOlfOJmmYGzw6e/hWQ92ih2cu6Jc6CimkBSFWzNIfQtaPvYhYCHP8GwNqrzw==}
+    peerDependencies:
+      react: ^18.2.0 || ^19.0.0
+      solid-js: ^1.7.6
+    peerDependenciesMeta:
+      react:
+        optional: true
+      solid-js:
+        optional: true
 
   abort-controller@3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
@@ -7475,6 +7489,10 @@ snapshots:
   '@xmldom/xmldom@0.7.13': {}
 
   '@xmldom/xmldom@0.8.10': {}
+
+  '@xstate/store@3.4.1(react@18.3.1)':
+    optionalDependencies:
+      react: 18.3.1
 
   abort-controller@3.0.0:
     dependencies:
