@@ -9,7 +9,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Text } from "~/components/ui/text";
 import { db } from "../../firebaseConfig";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, onSnapshot, doc } from "firebase/firestore";
 import { useColorScheme } from "nativewind";
 import {
   DropdownMenu,
@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
 } from "~/components/ui/dropdown-menu";
 import { ChevronDown } from "~/lib/icons/ChevronDown";
+import { auth } from "~/firebaseConfig"; // already imported
 
 type Transaction = {
   id: string;
@@ -85,6 +86,13 @@ const badgeDefinitions: Badge[] = [
   },
 ];
 
+const getBudgetEmoji = (progress: number) => {
+  if (progress < 0.5) return "😊";
+  if (progress < 0.8) return "😬";
+  if (progress <= 1) return "😰";
+  return "😱"; // Over budget
+};
+
 export default function Home() {
   const { colorScheme } = useColorScheme();
 
@@ -97,6 +105,7 @@ export default function Home() {
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [earnedBadges, setEarnedBadges] = useState<Badge[]>([]);
+  const [budgets, setBudgets] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -145,6 +154,24 @@ export default function Home() {
     setCategoryTotals(categoryMap);
     setTotalSpending(total);
   }, [transactions, selectedMonth, selectedYear]);
+
+  useEffect(() => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+
+    const monthKey = `${selectedYear}_${selectedMonth + 1}`;
+    const docRef = doc(db, "budgets", uid);
+
+    // Immediately reset budget to prevent visual mismatch
+    setBudgets({});
+
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      const data = docSnap.exists() ? docSnap.data() : {};
+      setBudgets(data[monthKey] || {});
+    });
+
+    return () => unsubscribe(); // Clean up listener on unmount or when month changes
+  }, [selectedMonth, selectedYear]);
 
   if (loading) {
     return (
@@ -230,17 +257,60 @@ export default function Home() {
         <Text className="text-lg font-semibold mb-2 text-foreground">
           Spending by Category:
         </Text>
-        {Object.entries(categoryTotals).map(([category, amount]) => (
-          <View
-            key={category}
-            className="bg-white dark:bg-zinc-900 p-3 rounded-lg border dark:border-zinc-700 mb-2"
-          >
-            <Text className="text-base text-foreground">{category}</Text>
-            <Text className="text-red-500 font-semibold">
-              RM {amount.toFixed(2)}
-            </Text>
-          </View>
-        ))}
+        {Object.entries(categoryTotals).map(([category, amount]) => {
+          const budget = budgets[category];
+          const progress = budget ? Math.min(amount / budget, 1) : null;
+          const isOverBudget = budget && amount > budget;
+
+          return (
+            <View
+              key={category}
+              className="bg-white dark:bg-zinc-900 p-3 rounded-lg border dark:border-zinc-700 mb-3"
+            >
+              <Text className="text-base text-foreground mb-1">{category}</Text>
+              <Text
+                className={`font-semibold ${
+                  isOverBudget ? "text-red-600" : "text-red-500"
+                }`}
+              >
+                Spent: RM {amount.toFixed(2)}
+                {budget && ` / RM ${budget.toFixed(2)}`}
+              </Text>
+
+              {typeof progress === "number" && (
+                <>
+                  <View className="flex-row items-center mt-2">
+                    {/* Progress Bar */}
+                    <View className="flex-1 h-3 bg-gray-300 dark:bg-zinc-700 rounded-full overflow-hidden">
+                      <View
+                        style={{ width: `${progress * 100}%` }}
+                        className={`h-full rounded-full ${
+                          isOverBudget ? "bg-red-600" : "bg-green-500"
+                        }`}
+                      />
+                    </View>
+
+                    {/* Emoji & % */}
+                    <View className="flex-row items-center ml-2">
+                      <Text className="text-lg mr-1">
+                        {getBudgetEmoji(progress)}
+                      </Text>
+                      <Text className="text-sm text-foreground">
+                        {Math.round(progress * 100)}%
+                      </Text>
+                    </View>
+                  </View>
+
+                  {isOverBudget && (
+                    <Text className="text-xs text-red-600 mt-1">
+                      ⚠️ Over Budget
+                    </Text>
+                  )}
+                </>
+              )}
+            </View>
+          );
+        })}
 
         {earnedBadges.length > 0 && (
           <>
