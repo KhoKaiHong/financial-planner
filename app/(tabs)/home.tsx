@@ -27,6 +27,7 @@ import {
 } from "~/components/ui/dropdown-menu";
 import { ChevronDown } from "~/lib/icons/ChevronDown";
 import { auth } from "~/firebaseConfig"; // already imported
+import { useRouter } from "expo-router";
 
 type Transaction = {
   id: string;
@@ -122,6 +123,7 @@ export default function Home() {
   const [fadeAnim] = useState(new Animated.Value(0));
   const [levelUpAnim] = useState(new Animated.Value(0));
   const [showLevelUpText, setShowLevelUpText] = useState(false);
+  const router = useRouter();
 
   const triggerXpAnimation = (amount: number) => {
     setXpGainAmount(amount);
@@ -499,6 +501,16 @@ export default function Home() {
                 </View>
               ))}
             </ScrollView>
+
+            {/* 👉 View More Button */}
+            <TouchableOpacity
+              onPress={() => router.push("/(tabs)/badges")}
+              className="self-end px-4 py-2 rounded-lg bg-indigo-600 dark:bg-indigo-400"
+            >
+              <Text className="text-white dark:text-black font-semibold">
+                View More →
+              </Text>
+            </TouchableOpacity>
           </>
         )}
       </ScrollView>
