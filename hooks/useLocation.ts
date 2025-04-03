@@ -5,5 +5,6 @@ export function useLocation() {
   return useQuery({
     queryFn: () => Location.getCurrentPositionAsync(),
     queryKey: ["useLocation"],
+    refetchInterval: 30000,
   });
 }
