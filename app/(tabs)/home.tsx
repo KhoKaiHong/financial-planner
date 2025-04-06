@@ -28,6 +28,8 @@ import {
 import { ChevronDown } from "~/lib/icons/ChevronDown";
 import { auth } from "~/firebaseConfig"; // already imported
 import { useRouter } from "expo-router";
+import { PieChart } from "react-native-svg-charts";
+import { Circle, G, Line } from "react-native-svg";
 
 type Transaction = {
   id: string;
@@ -102,6 +104,23 @@ const getBudgetEmoji = (progress: number) => {
   return "😱"; // Over budget
 };
 
+const getRandomColor = (category: string) => {
+  const colors = [
+    "#FF6384",
+    "#36A2EB",
+    "#FFCE56",
+    "#4BC0C0",
+    "#9966FF",
+    "#FF9F40",
+  ];
+  let hash = 0;
+  for (let i = 0; i < category.length; i++) {
+    hash = category.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash % colors.length);
+  return colors[index];
+};
+
 export default function Home() {
   const { colorScheme } = useColorScheme();
 
@@ -123,6 +142,7 @@ export default function Home() {
   const [fadeAnim] = useState(new Animated.Value(0));
   const [levelUpAnim] = useState(new Animated.Value(0));
   const [showLevelUpText, setShowLevelUpText] = useState(false);
+  const [showCircleChart, setShowCircleChart] = useState(false);
   const router = useRouter();
 
   const triggerXpAnimation = (amount: number) => {
@@ -177,7 +197,8 @@ export default function Home() {
       const txnDate = new Date(year, month - 1, day);
       return (
         txnDate.getMonth() === selectedMonth &&
-        txnDate.getFullYear() === selectedYear
+        txnDate.getFullYear() === selectedYear &&
+        txn.amount < 0 // ✅ Only expenses
       );
     });
 
@@ -312,6 +333,15 @@ export default function Home() {
             </Animated.View>
           )}
 
+          <TouchableOpacity
+            onPress={() => setShowCircleChart(!showCircleChart)}
+            className="self-end px-4 py-2 rounded-lg bg-indigo-600 dark:bg-indigo-400 mb-4"
+          >
+            <Text className="text-white dark:text-black font-semibold">
+              {showCircleChart ? "Show List View" : "Show Chart View"}
+            </Text>
+          </TouchableOpacity>
+
           <Text className="text-lg font-semibold text-foreground mb-1">
             Login Streak: {streak}{" "}
             {Array(Math.min(streak, 8)).fill("🔥").join("")}
@@ -417,37 +447,51 @@ export default function Home() {
             Total Spending:
           </Text>
           <Text className="text-red-600 text-xl font-bold">
-            RM {totalSpending.toFixed(2)}
+            RM {Math.abs(totalSpending).toFixed(2)}
           </Text>
         </View>
 
         <Text className="text-lg font-semibold mb-2 text-foreground">
           Spending by Category:
         </Text>
-        {Object.entries(categoryTotals).map(([category, amount]) => {
-          const budget = budgets[category];
-          const progress = budget ? Math.min(amount / budget, 1) : null;
-          const isOverBudget = budget && amount > budget;
 
-          return (
-            <View
-              key={category}
-              className="bg-white dark:bg-zinc-900 p-3 rounded-lg border dark:border-zinc-700 mb-3"
-            >
-              <Text className="text-base text-foreground mb-1">{category}</Text>
-              <Text
-                className={`font-semibold ${
-                  isOverBudget ? "text-red-600" : "text-red-500"
-                }`}
+        {showCircleChart ? (
+          <PieChart
+            style={{ height: 200 }}
+            data={Object.entries(categoryTotals).map(([category, amount]) => ({
+              key: category,
+              value: Math.abs(amount), // make sure expenses are positive
+              svg: { fill: getRandomColor(category) },
+              arc: { outerRadius: "100%", cornerRadius: 5 },
+            }))}
+            innerRadius="50%"
+            outerRadius="90%"
+          />
+        ) : (
+          Object.entries(categoryTotals).map(([category, amount]) => {
+            const budget = budgets[category];
+            const progress = budget ? Math.min(Math.abs(amount) / budget, 1) : null;
+            const isOverBudget = budget && amount > budget;
+
+            return (
+              <View
+                key={category}
+                className="bg-white dark:bg-zinc-900 p-3 rounded-lg border dark:border-zinc-700 mb-3"
               >
-                Spent: RM {amount.toFixed(2)}
-                {budget && ` / RM ${budget.toFixed(2)}`}
-              </Text>
-
-              {typeof progress === "number" && (
-                <>
+                <Text className="text-base text-foreground mb-1">
+                  {category}
+                </Text>
+                <Text
+                  className={`font-semibold ${
+                    isOverBudget ? "text-red-600" : "text-red-500"
+                  }`}
+                >
+                  Spent: RM {Math.abs(amount).toFixed(2)}
+                  {budget && ` / RM ${budget.toFixed(2)}`}
+                </Text>
+                {/* Progress Bar continues here */}
+                {typeof progress === "number" && (
                   <View className="flex-row items-center mt-2">
-                    {/* Progress Bar */}
                     <View className="flex-1 h-3 bg-gray-300 dark:bg-zinc-700 rounded-full overflow-hidden">
                       <View
                         style={{ width: `${progress * 100}%` }}
@@ -456,8 +500,6 @@ export default function Home() {
                         }`}
                       />
                     </View>
-
-                    {/* Emoji & % */}
                     <View className="flex-row items-center ml-2">
                       <Text className="text-lg mr-1">
                         {getBudgetEmoji(progress)}
@@ -467,17 +509,11 @@ export default function Home() {
                       </Text>
                     </View>
                   </View>
-
-                  {isOverBudget && (
-                    <Text className="text-xs text-red-600 mt-1">
-                      ⚠️ Over Budget
-                    </Text>
-                  )}
-                </>
-              )}
-            </View>
-          );
-        })}
+                )}
+              </View>
+            );
+          })
+        )}
 
         {earnedBadges.length > 0 && (
           <>
