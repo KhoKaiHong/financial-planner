@@ -2,7 +2,7 @@ import { Redirect, Tabs } from "expo-router";
 import { House } from "~/lib/icons/House";
 import { Settings } from "~/lib/icons/Settings";
 import { User } from "~/lib/icons/User";
-import { MapPinned } from "~/lib/icons/MapPinned";
+import { Utensils } from "~/lib/icons/Utensils";
 import { useColorScheme } from "~/lib/useColorScheme";
 import { useRouter } from "expo-router";
 import { auth } from "~/firebaseConfig";
@@ -59,13 +59,13 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="maps"
+        name="food"
         options={{
-          headerTitle: "Maps",
-          title: "Maps",
+          headerTitle: "Food Finder",
+          title: "Food Finder",
           headerTitleStyle: { fontFamily: "inter-medium" },
           headerTitleAlign: "center",
-          tabBarIcon: ({ color }) => <MapPinned size={20} color={color} />,
+          tabBarIcon: ({ color }) => <Utensils size={20} color={color} />,
         }}
       />
       <Tabs.Screen

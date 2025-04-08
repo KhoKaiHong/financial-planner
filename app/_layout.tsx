@@ -9,7 +9,7 @@ import {
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as React from "react";
-import { Platform } from "react-native";
+import { Platform, View } from "react-native";
 import { NAV_THEME } from "~/lib/constants";
 import { useColorScheme } from "~/lib/useColorScheme";
 import { DevToolsBubble } from "react-native-react-query-devtools";
@@ -21,6 +21,7 @@ import { useFonts } from "expo-font";
 import { PortalHost } from "@rn-primitives/portal";
 import { ColorSchemeToggle } from "~/components/color-scheme-toggle";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { Text } from "~/components/ui/text";
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
