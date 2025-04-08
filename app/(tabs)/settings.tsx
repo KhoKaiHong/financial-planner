@@ -1,81 +1,82 @@
-import { useState } from "react";
+"use client"
+
+import { useState } from "react"
+import { View, ScrollView, TextInput, Alert, ActivityIndicator, Switch, TouchableOpacity } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
+import { Text } from "~/components/ui/text"
+import { db, auth } from "~/firebaseConfig"
+import { addDoc, collection } from "firebase/firestore"
+import { useColorScheme } from "nativewind"
+import axios from "axios"
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "~/components/ui/dropdown-menu"
+import { Card, SectionTitle, Button } from "~/components/ui-elements"
 import {
-  View,
-  ScrollView,
-  TextInput,
-  Alert,
-  ActivityIndicator,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Text } from "~/components/ui/text";
-import { Button } from "~/components/ui/button";
-import { Label } from "~/components/ui/label";
-import { db, auth } from "~/firebaseConfig";
-import { addDoc, collection } from "firebase/firestore";
-import { useColorScheme } from "nativewind";
-import axios from "axios";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "~/components/ui/dropdown-menu";
+  Settings as SettingsIcon,
+  Award,
+  ChevronDown,
+  Tag,
+  DollarSign,
+  Sparkles,
+  Globe,
+  Bell,
+  Lock,
+} from "lucide-react-native"
 
 type AchievementCondition = {
-  type: "categorySpendingBelow";
-  value: number;
-  category: string;
-};
+  type: "categorySpendingBelow"
+  value: number
+  category: string
+}
 
 type CustomAchievement = {
-  title: string;
-  icon: string;
-  condition: AchievementCondition;
-  public: boolean;
-  createdAt: Date;
-  userId: string;
-};
+  title: string
+  icon: string
+  condition: AchievementCondition
+  public: boolean
+  createdAt: Date
+  userId: string
+}
 
-export default function CreateAchievement() {
-  const [title, setTitle] = useState("");
-  const [icon, setIcon] = useState("🏆");
-  const [value, setValue] = useState("");
-  const [category, setCategory] = useState("");
-  const [isPublic, setIsPublic] = useState(true);
-  const [loadingTitle, setLoadingTitle] = useState(false);
-  const [titleSuggestions, setTitleSuggestions] = useState<string[]>([]);
+export default function SettingsScreen() {
+  const [title, setTitle] = useState("")
+  const [icon, setIcon] = useState("🏆")
+  const [value, setValue] = useState("")
+  const [category, setCategory] = useState("")
+  const [isPublic, setIsPublic] = useState(true)
+  const [loadingTitle, setLoadingTitle] = useState(false)
+  const [titleSuggestions, setTitleSuggestions] = useState<string[]>([])
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true)
+  const [darkModeEnabled, setDarkModeEnabled] = useState(false)
+  const [biometricEnabled, setBiometricEnabled] = useState(false)
 
-  const { colorScheme } = useColorScheme();
+  const { colorScheme, setColorScheme } = useColorScheme()
 
   const generateTitleFromAPI = async (category: string, amount: string) => {
     try {
-      const response = await axios.post(
-        "http://192.168.100.159:3000/generate-title",
-        {
-          category,
-          amount,
-        }
-      );
-      const result = response.data.title;
+      const response = await axios.post("http://192.168.1.202:3000/generate-title", {
+        category,
+        amount,
+      })
+      const result = response.data.title
 
-      if (Array.isArray(result)) return result;
+      if (Array.isArray(result)) return result
 
       // Handle fallback: parse string into array if needed
-      const matches = result.match(/\*([^\*]+)\*/g); // match *something*
-      return matches?.map((s) => s.replace(/\*/g, "").trim()) ?? [result];
+      const matches = result.match(/\*([^*]+)\*/g) // match *something*
+      return matches?.map((s: string) => String(s).replace(/\*/g, "").trim()) ?? [result]
     } catch (error) {
-      console.error("❌ Failed to get title:", error);
-      return null;
+      console.error("❌ Failed to get title:", error)
+      return null
     }
-  };
+  }
 
   const onSubmit = async () => {
-    const user = auth.currentUser;
-    if (!user) return Alert.alert("Error", "You must be logged in");
+    const user = auth.currentUser
+    if (!user) return Alert.alert("Error", "You must be logged in")
 
     if (!title || !value || !category) {
-      Alert.alert("Missing Fields", "Please fill in all required fields.");
-      return;
+      Alert.alert("Missing Fields", "Please fill in all required fields.")
+      return
     }
 
     const achievement: CustomAchievement = {
@@ -89,160 +90,237 @@ export default function CreateAchievement() {
         value: Number(value),
         category,
       },
-    };
+    }
 
     try {
-      await addDoc(collection(db, "customAchievements"), achievement);
-      Alert.alert("Success", "Achievement created!");
-      setTitle("");
-      setTitleSuggestions([]);
-      setIcon("🏆");
-      setValue("");
-      setCategory("");
+      await addDoc(collection(db, "customAchievements"), achievement)
+      Alert.alert("Success", "Achievement created!")
+      setTitle("")
+      setTitleSuggestions([])
+      setIcon("🏆")
+      setValue("")
+      setCategory("")
     } catch (e) {
-      console.error("🔥 Failed to add custom achievement:", e);
-      Alert.alert("Error", "Something went wrong.");
+      console.error("🔥 Failed to add custom achievement:", e)
+      Alert.alert("Error", "Something went wrong.")
     }
-  };
+  }
+
+  const toggleDarkMode = (value: boolean) => {
+    setDarkModeEnabled(value)
+    setColorScheme(value ? "dark" : "light")
+  }
 
   return (
-    <SafeAreaView className="flex-1 p-4 bg-background">
-      <ScrollView className="gap-4">
-        <Text className="text-2xl font-bold mb-4 text-foreground">
-          🎯 Create Your Own Achievement
-        </Text>
-
-        <View className="gap-2 mb-4">
-          <Label>Target Category</Label>
-          <TextInput
-            className="border p-2 rounded-md text-foreground"
-            placeholder="e.g. Food"
-            placeholderTextColor={colorScheme === "dark" ? "#aaa" : "#666"}
-            value={category}
-            onChangeText={setCategory}
-          />
+    <SafeAreaView className="flex-1 bg-background">
+      <ScrollView
+        className="flex-1 px-5"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingVertical: 16, paddingBottom: 40 }}
+      >
+        <View className="flex-row items-center mb-4">
+          <SettingsIcon size={20} className="text-indigo-500 mr-2" />
+          <SectionTitle>Settings</SectionTitle>
         </View>
 
-        <View className="gap-2 mb-4">
-          <Label>Max Spending Threshold (RM)</Label>
-          <TextInput
-            className="border p-2 rounded-md text-foreground"
-            placeholder="e.g. 200"
-            placeholderTextColor={colorScheme === "dark" ? "#aaa" : "#666"}
-            keyboardType="numeric"
-            value={value}
-            onChangeText={setValue}
-          />
-        </View>
+        {/* App Settings */}
+        <Card>
+          <Text className="text-lg font-medium text-foreground mb-4">App Preferences</Text>
 
-        <View className="gap-2 mb-2">
-          <View className="flex-row justify-between items-center">
-            <Label>Title</Label>
-            <Button
-              variant="outline"
-              onPress={async () => {
-                if (!category || !value) {
-                  return Alert.alert(
-                    "Missing Info",
-                    "Please enter category and amount first."
-                  );
-                }
-
-                setLoadingTitle(true);
-                const suggestions = await generateTitleFromAPI(category, value);
-                setLoadingTitle(false);
-
-                if (suggestions) {
-                  setTitleSuggestions(suggestions);
-                  setTitle(suggestions[0]);
-                } else {
-                  Alert.alert(
-                    "Error",
-                    "Could not generate title. Try again later."
-                  );
-                }
-              }}
-            >
-              {loadingTitle ? (
-                <ActivityIndicator size="small" />
-              ) : (
-                <Text>Suggest Title</Text>
-              )}
-            </Button>
+          <View className="flex-row justify-between items-center mb-4">
+            <View className="flex-row items-center">
+              <Bell size={18} className="text-indigo-500 mr-3" />
+              <Text className="text-foreground">Notifications</Text>
+            </View>
+            <Switch
+              value={notificationsEnabled}
+              onValueChange={setNotificationsEnabled}
+              trackColor={{ false: "#767577", true: "#6366f1" }}
+              thumbColor="#f4f3f4"
+            />
           </View>
 
-          {titleSuggestions.length > 0 && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full">
-                  <Text className="text-foreground">
-                    {title || "Select Suggested Title"}
-                  </Text>
-                </Button>
-              </DropdownMenuTrigger>
+          <View className="flex-row justify-between items-center mb-4">
+            <View className="flex-row items-center">
+              <Globe size={18} className="text-indigo-500 mr-3" />
+              <Text className="text-foreground">Dark Mode</Text>
+            </View>
+            <Switch
+              value={darkModeEnabled}
+              onValueChange={toggleDarkMode}
+              trackColor={{ false: "#767577", true: "#6366f1" }}
+              thumbColor="#f4f3f4"
+            />
+          </View>
 
-              <DropdownMenuContent
-                className="w-full rounded-md border border-border bg-background shadow-md"
-                style={{
-                  maxHeight: 200,
-                  overflow: "hidden",
-                }}
-              >
-                <ScrollView
-                  style={{
-                    maxHeight: 200,
-                  }}
-                  nestedScrollEnabled
-                >
-                  {titleSuggestions.map((suggestion, index) => (
-                    <DropdownMenuItem
-                      key={index}
-                      onPress={() => setTitle(suggestion)}
-                      className="px-4 py-3 border-b border-border"
-                    >
-                      <Text className="text-foreground">{suggestion}</Text>
-                    </DropdownMenuItem>
-                  ))}
-                </ScrollView>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+          <View className="flex-row justify-between items-center">
+            <View className="flex-row items-center">
+              <Lock size={18} className="text-indigo-500 mr-3" />
+              <Text className="text-foreground">Biometric Authentication</Text>
+            </View>
+            <Switch
+              value={biometricEnabled}
+              onValueChange={setBiometricEnabled}
+              trackColor={{ false: "#767577", true: "#6366f1" }}
+              thumbColor="#f4f3f4"
+            />
+          </View>
+        </Card>
 
-          <TextInput
-            className="border p-2 rounded-md text-foreground mt-2"
-            placeholder="Or write your own..."
-            placeholderTextColor={colorScheme === "dark" ? "#aaa" : "#666"}
-            value={title}
-            onChangeText={setTitle}
-          />
-        </View>
+        {/* Custom Achievement */}
+        <View className="mt-6">
+          <View className="flex-row items-center mb-4">
+            <Award size={20} className="text-indigo-500 mr-2" />
+            <SectionTitle>Create Custom Achievement</SectionTitle>
+          </View>
 
-        <View className="gap-2 mb-4">
-          <Label>Icon (Emoji)</Label>
-          <TextInput
-            className="border p-2 rounded-md text-foreground"
-            placeholder="🏆"
-            placeholderTextColor={colorScheme === "dark" ? "#aaa" : "#666"}
-            value={icon}
-            onChangeText={setIcon}
-          />
-        </View>
-
-        <View className="gap-2 mb-4">
-          <Label>Public?</Label>
-          <Button variant="secondary" onPress={() => setIsPublic(!isPublic)}>
-            <Text>
-              {isPublic
-                ? "Yes (Tap to make Private)"
-                : "No (Tap to make Public)"}
+          <Card>
+            <Text className="text-sm text-muted-foreground mb-4">
+              Create your own custom achievement to track specific financial goals.
             </Text>
-          </Button>
-        </View>
 
-        <Button onPress={onSubmit}>
-          <Text>Create Achievement</Text>
-        </Button>
+            <View className="mb-4">
+              <Text className="text-sm font-medium text-foreground mb-2">
+                <Tag size={16} className="text-indigo-500 mr-1" />
+                Target Category
+              </Text>
+              <TextInput
+                className="border border-gray-300 dark:border-zinc-700 p-3 rounded-lg text-foreground"
+                placeholder="e.g. Food"
+                placeholderTextColor={colorScheme === "dark" ? "#aaa" : "#666"}
+                value={category}
+                onChangeText={setCategory}
+              />
+            </View>
+
+            <View className="mb-4">
+              <Text className="text-sm font-medium text-foreground mb-2">
+                <DollarSign size={16} className="text-indigo-500 mr-1" />
+                Max Spending Threshold (RM)
+              </Text>
+              <TextInput
+                className="border border-gray-300 dark:border-zinc-700 p-3 rounded-lg text-foreground"
+                placeholder="e.g. 200"
+                placeholderTextColor={colorScheme === "dark" ? "#aaa" : "#666"}
+                keyboardType="numeric"
+                value={value}
+                onChangeText={setValue}
+              />
+            </View>
+
+            <View className="mb-4">
+              <View className="flex-row justify-between items-center mb-2">
+                <Text className="text-sm font-medium text-foreground">Achievement Title</Text>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onPress={async () => {
+                    if (!category || !value) {
+                      return Alert.alert("Missing Info", "Please enter category and amount first.")
+                    }
+
+                    setLoadingTitle(true)
+                    const suggestions = await generateTitleFromAPI(category, value)
+                    setLoadingTitle(false)
+
+                    if (suggestions) {
+                      setTitleSuggestions(suggestions)
+                      setTitle(suggestions[0])
+                    } else {
+                      Alert.alert("Error", "Could not generate title. Try again later.")
+                    }
+                  }}
+                >
+                  {loadingTitle ? (
+                    <ActivityIndicator size="small" />
+                  ) : (
+                    <View className="flex-row items-center">
+                      <Sparkles size={14} className="text-indigo-500 mr-1" />
+                      <Text>Suggest Title</Text>
+                    </View>
+                  )}
+                </Button>
+              </View>
+
+              {titleSuggestions.length > 0 && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <TouchableOpacity className="flex-row items-center justify-between bg-gray-100 dark:bg-zinc-800 p-3 rounded-lg mb-2">
+                      <Text className="text-foreground">{title || "Select Suggested Title"}</Text>
+                      <ChevronDown size={16} className="text-foreground" />
+                    </TouchableOpacity>
+                  </DropdownMenuTrigger>
+
+                  <DropdownMenuContent
+                    className="bg-background border border-border rounded-md"
+                    style={{
+                      maxHeight: 200,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <ScrollView
+                      style={{
+                        maxHeight: 200,
+                      }}
+                      nestedScrollEnabled
+                    >
+                      {titleSuggestions.map((suggestion, index) => (
+                        <DropdownMenuItem
+                          key={index}
+                          onPress={() => setTitle(suggestion)}
+                          className="px-4 py-3 border-b border-border"
+                        >
+                          <Text className="text-foreground">{suggestion}</Text>
+                        </DropdownMenuItem>
+                      ))}
+                    </ScrollView>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+
+              <TextInput
+                className="border border-gray-300 dark:border-zinc-700 p-3 rounded-lg text-foreground"
+                placeholder="Or write your own..."
+                placeholderTextColor={colorScheme === "dark" ? "#aaa" : "#666"}
+                value={title}
+                onChangeText={setTitle}
+              />
+            </View>
+
+            <View className="mb-4">
+              <Text className="text-sm font-medium text-foreground mb-2">Icon (Emoji)</Text>
+              <TextInput
+                className="border border-gray-300 dark:border-zinc-700 p-3 rounded-lg text-foreground"
+                placeholder="🏆"
+                placeholderTextColor={colorScheme === "dark" ? "#aaa" : "#666"}
+                value={icon}
+                onChangeText={setIcon}
+              />
+            </View>
+
+            <View className="mb-4">
+              <Text className="text-sm font-medium text-foreground mb-2">Visibility</Text>
+              <View className="flex-row justify-between items-center">
+                <Text className="text-foreground">Make achievement public</Text>
+                <Switch
+                  value={isPublic}
+                  onValueChange={setIsPublic}
+                  trackColor={{ false: "#767577", true: "#6366f1" }}
+                  thumbColor="#f4f3f4"
+                />
+              </View>
+            </View>
+
+            <Button onPress={onSubmit} variant="primary" fullWidth>
+              <View className="flex-row items-center">
+                <Award size={16} className="text-white mr-2" />
+                <Text>Create Achievement</Text>
+              </View>
+            </Button>
+          </Card>
+        </View>
       </ScrollView>
     </SafeAreaView>
-  );
+  )
 }
+

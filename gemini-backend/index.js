@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { generateAchievementTitle } from "./gemini.js";
+import { generateAchievementTitle, generateAIAnalysis } from "./gemini.js";
 
 dotenv.config();
 
@@ -30,3 +30,21 @@ app.post("/generate-title", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
+
+// Add new endpoint for AI-based asset prediction
+app.post("/ai-analysis", async (req, res) => {
+  const { income, expenses, dependents } = req.body;
+
+  if (income === undefined || expenses === undefined || !dependents) {
+    return res.status(400).json({ error: "Missing income, expenses or dependents" });
+  }
+
+  try {
+    const analysis = await generateAIAnalysis(income, expenses, dependents);
+    res.json({ analysis });
+  } catch (error) {
+    console.error("🔥 Error generating AI analysis:", error);
+    res.status(500).json({ error: "Could not generate analysis" });
+  }
+});
+

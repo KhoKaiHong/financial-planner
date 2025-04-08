@@ -133,46 +133,54 @@ export default function TransactionHistoryScreen() {
     return transactions;
   };
 
-  const generateCostCuttingTips = (transactions: Transaction[]) => {
+  const generateCostCuttingTips = (transactions: Transaction[], budgets: Record<string, number> = {}) => {
     const tips: string[] = [];
     const categoryTotals: { [category: string]: number } = {};
-
+    let smallTransactionCount = 0;
+    let totalSpending = 0;
+  
     transactions.forEach((txn) => {
       if (txn.amount >= 0) return; // Only expenses
+  
       const category = txn.category || "Uncategorized";
-      categoryTotals[category] =
-        (categoryTotals[category] || 0) + Math.abs(txn.amount);
+      const amountAbs = Math.abs(txn.amount);
+  
+      categoryTotals[category] = (categoryTotals[category] || 0) + amountAbs;
+      totalSpending += amountAbs;
+  
+      if (amountAbs < 10) smallTransactionCount += 1; // small txns < RM10
     });
-
+  
+    // Category-based analysis
     Object.entries(categoryTotals).forEach(([category, total]) => {
-      // Simple rule: if spending > RM50, suggest reduce spending
-      if (total > 50) {
-        tips.push(
-          `💡 Consider reducing spending in "${category}" (RM ${total.toFixed(
-            2
-          )} this month).`
-        );
-      } else if (total > 20) {
-        tips.push(
-          `🧩 You're spending moderately in "${category}". Review if all purchases are necessary.`
-        );
+      const budget = budgets[category];
+  
+      if (budget && total > budget * 1.1) {
+        tips.push(`🚨 Spending in "${category}" exceeded your budget of RM ${budget.toFixed(2)}.`);
+      } else if (budget && total > budget * 0.8) {
+        tips.push(`⚠️ You're nearing your budget in "${category}". Consider reviewing your spending.`);
+      } else if (!budget && total > totalSpending * 0.3) {
+        tips.push(`💡 You're spending a lot in "${category}" (RM ${total.toFixed(2)}). Consider reducing it.`);
       }
     });
-
-    if (Object.keys(categoryTotals).length === 1) {
-      tips.push(
-        "📊 You're spending in only one category. Consider diversifying your expenses."
-      );
+  
+    // Spending diversity
+    if (Object.keys(categoryTotals).length <= 1 && totalSpending > 50) {
+      tips.push("📊 Most of your spending is concentrated in one category. Diversify to balance your expenses.");
     }
-
-    if (transactions.filter((txn) => txn.amount < 0).length > 20) {
-      tips.push(
-        "🔍 You have many small transactions. Check if some are avoidable."
-      );
+  
+    // Small transactions warning
+    if (smallTransactionCount > 10) {
+      tips.push("🔍 You have many small transactions. Review if some can be avoided to save money.");
     }
-
+  
+    // No spending at all
+    if (totalSpending === 0) {
+      tips.push("✅ No spending detected this month. Great job controlling your expenses!");
+    }
+  
     return tips;
-  };
+  };  
 
   const updateCategory = async (transactionId: string, newCategory: string) => {
     try {

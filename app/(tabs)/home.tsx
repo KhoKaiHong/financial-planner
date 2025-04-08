@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+"use client";
+
+import { useEffect, useState } from "react";
 import {
-  FlatList,
   ActivityIndicator,
   View,
   TouchableOpacity,
@@ -18,7 +19,6 @@ import {
   onSnapshot,
   doc,
 } from "firebase/firestore";
-import { useColorScheme } from "nativewind";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -26,10 +26,20 @@ import {
   DropdownMenuItem,
 } from "~/components/ui/dropdown-menu";
 import { ChevronDown } from "~/lib/icons/ChevronDown";
-import { auth } from "~/firebaseConfig"; // already imported
+import { auth } from "~/firebaseConfig";
 import { useRouter } from "expo-router";
 import { PieChart } from "react-native-svg-charts";
-import { Circle, G, Line } from "react-native-svg";
+import {
+  Card,
+  SectionTitle,
+  Badge,
+  ProgressBar,
+  Button,
+} from "~/components/ui-elements";
+import { Award } from "~/lib/icons/Award";
+import { Calendar } from "~/lib/icons/Calendar";
+import { TrendingUp } from "~/lib/icons/TrendingUp";
+import { BarChart2 } from "~/lib/icons/BarChart2";
 
 type Transaction = {
   id: string;
@@ -63,14 +73,14 @@ const monthOptions = [
 
 const yearOptions = [2023, 2024, 2025];
 
-type Badge = {
+type BadgeType = {
   id: string;
   label: string;
-  icon: string; // use emojis or custom images
+  icon: string;
   condition: (total: number, categories: CategoryTotals) => boolean;
 };
 
-const badgeDefinitions: Badge[] = [
+const badgeDefinitions: BadgeType[] = [
   {
     id: "starter",
     label: "Budget Starter 💼",
@@ -104,26 +114,20 @@ const getBudgetEmoji = (progress: number) => {
   return "😱"; // Over budget
 };
 
-const getRandomColor = (category: string) => {
-  const colors = [
-    "#FF6384",
-    "#36A2EB",
-    "#FFCE56",
-    "#4BC0C0",
-    "#9966FF",
-    "#FF9F40",
-  ];
-  let hash = 0;
-  for (let i = 0; i < category.length; i++) {
-    hash = category.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const index = Math.abs(hash % colors.length);
-  return colors[index];
+const categoryColors: Record<string, string> = {
+  Food: "#FFCE56",
+  Shopping: "#FF6384",
+  Entertainment: "#36A2EB",
+  Transportation: "#4BC0C0",
+  Bills: "#9966FF",
+  Uncategorized: "#FF9F40",
+};
+
+const getCategoryColor = (category: string) => {
+  return categoryColors[category] || "#999999"; // fallback color
 };
 
 export default function Home() {
-  const { colorScheme } = useColorScheme();
-
   const [loading, setLoading] = useState(true);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categoryTotals, setCategoryTotals] = useState<CategoryTotals>({});
@@ -132,35 +136,35 @@ export default function Home() {
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
-  const [earnedBadges, setEarnedBadges] = useState<Badge[]>([]);
+  const [earnedBadges, setEarnedBadges] = useState<BadgeType[]>([]);
   const [budgets, setBudgets] = useState<Record<string, number>>({});
   const [xp, setXp] = useState(0);
   const [level, setLevel] = useState(1);
   const [streak, setStreak] = useState(0);
-  const [levelUp, setLevelUp] = useState(false);
   const [xpGainAmount, setXpGainAmount] = useState<number | null>(null);
   const [fadeAnim] = useState(new Animated.Value(0));
   const [levelUpAnim] = useState(new Animated.Value(0));
   const [showLevelUpText, setShowLevelUpText] = useState(false);
   const [showCircleChart, setShowCircleChart] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const router = useRouter();
 
   const triggerXpAnimation = (amount: number) => {
     setXpGainAmount(amount);
-    fadeAnim.setValue(1); // Fully visible
+    fadeAnim.setValue(1);
 
     Animated.timing(fadeAnim, {
       toValue: 0,
       duration: 1000,
       useNativeDriver: true,
     }).start(() => {
-      setXpGainAmount(null); // Remove text after fade
+      setXpGainAmount(null);
     });
   };
 
   const triggerLevelUpAnimation = () => {
     setShowLevelUpText(true);
-    levelUpAnim.setValue(1); // start fully visible and scaled
+    levelUpAnim.setValue(1);
 
     Animated.timing(levelUpAnim, {
       toValue: 0,
@@ -198,7 +202,7 @@ export default function Home() {
       return (
         txnDate.getMonth() === selectedMonth &&
         txnDate.getFullYear() === selectedYear &&
-        txn.amount < 0 // ✅ Only expenses
+        txn.amount < 0
       );
     });
 
@@ -211,7 +215,7 @@ export default function Home() {
       total += txn.amount;
     });
 
-    const newEarned: Badge[] = badgeDefinitions.filter((badge) =>
+    const newEarned: BadgeType[] = badgeDefinitions.filter((badge) =>
       badge.condition(total, categoryMap)
     );
 
@@ -223,20 +227,18 @@ export default function Home() {
   useEffect(() => {
     const uid = auth.currentUser?.uid;
     if (!uid) return;
-
-    const monthKey = `${selectedYear}_${selectedMonth + 1}`;
+  
     const docRef = doc(db, "budgets", uid);
-
-    // Immediately reset budget to prevent visual mismatch
+  
     setBudgets({});
-
+  
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       const data = docSnap.exists() ? docSnap.data() : {};
-      setBudgets(data[monthKey] || {});
+      setBudgets(data["global"] || {});
     });
-
-    return () => unsubscribe(); // Clean up listener on unmount or when month changes
-  }, [selectedMonth, selectedYear]);
+  
+    return () => unsubscribe();
+  }, []);  
 
   useEffect(() => {
     const uid = auth.currentUser?.uid;
@@ -257,7 +259,6 @@ export default function Home() {
 
       const timeSinceLastLogin = now - lastLogin;
 
-      // If less than 30 seconds passed, skip
       if (timeSinceLastLogin < 30_000) {
         setXp(currentXp);
         setLevel(currentLevel);
@@ -270,7 +271,7 @@ export default function Home() {
         newXp >= currentLevel * 100 ? currentLevel + 1 : currentLevel;
       if (newXp >= currentLevel * 100) {
         newLevel += 1;
-        triggerLevelUpAnimation(); // 🔥 use animated version
+        triggerLevelUpAnimation();
       }
 
       const newStreak = timeSinceLastLogin < 60_000 ? currentStreak + 1 : 1;
@@ -294,7 +295,7 @@ export default function Home() {
 
     updateLoginStreak();
 
-    const interval = setInterval(updateLoginStreak, 10_000); // Check every 10 seconds
+    const interval = setInterval(updateLoginStreak, 10_000);
 
     return () => clearInterval(interval);
   }, []);
@@ -311,59 +312,59 @@ export default function Home() {
     <SafeAreaView className="flex-1 bg-background">
       <ScrollView
         contentContainerStyle={{
-          paddingHorizontal: 24,
-          paddingTop: 32,
+          paddingHorizontal: 20,
+          paddingTop: 16,
           paddingBottom: 32,
         }}
+        showsVerticalScrollIndicator={false}
       >
-        <View className="mb-4">
-          {xpGainAmount !== null && (
-            <Animated.View
-              style={{
-                position: "absolute",
-                top: -30,
-                alignSelf: "center",
-                opacity: fadeAnim,
-              }}
-              pointerEvents="none"
-            >
-              <Text className="text-green-500 text-lg font-bold">
-                +{xpGainAmount} XP
-              </Text>
-            </Animated.View>
-          )}
+        {/* User Stats Card */}
+        <Card>
+          <View className="flex-row justify-between items-center mb-3">
+            <View className="flex-row items-center">
+              <View className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900 items-center justify-center mr-3">
+                <Text className="text-xl">👤</Text>
+              </View>
+              <View>
+                <Text className="text-lg font-semibold text-foreground">
+                  Level {level}
+                </Text>
+                <View className="flex-row items-center">
+                  <Calendar size={14} className="text-indigo-500 mr-1" />
+                  <Text className="text-sm text-muted-foreground">
+                    {streak} day streak
+                  </Text>
+                </View>
+              </View>
+            </View>
 
-          <TouchableOpacity
-            onPress={() => setShowCircleChart(!showCircleChart)}
-            className="self-end px-4 py-2 rounded-lg bg-indigo-600 dark:bg-indigo-400 mb-4"
-          >
-            <Text className="text-white dark:text-black font-semibold">
-              {showCircleChart ? "Show List View" : "Show Chart View"}
-            </Text>
-          </TouchableOpacity>
-
-          <Text className="text-lg font-semibold text-foreground mb-1">
-            Login Streak: {streak}{" "}
-            {Array(Math.min(streak, 8)).fill("🔥").join("")}
-          </Text>
-
-          <Text className="text-foreground mb-2">
-            🧬 XP: {xp % 100} / {100} — Level {level}
-          </Text>
-
-          <View className="h-3 w-full bg-gray-300 dark:bg-zinc-700 rounded-full overflow-hidden">
-            <View
-              style={{ width: `${((xp % 100) / 100) * 100}%` }}
-              className="h-full bg-indigo-500 rounded-full"
-            />
+            {xpGainAmount !== null && (
+              <Animated.View
+                style={{
+                  opacity: fadeAnim,
+                }}
+              >
+                <Badge label={`+${xpGainAmount} XP`} color="green" />
+              </Animated.View>
+            )}
           </View>
-        </View>
+
+          <View className="mb-1">
+            <View className="flex-row justify-between mb-1">
+              <Text className="text-sm text-muted-foreground">XP Progress</Text>
+              <Text className="text-sm font-medium text-foreground">
+                {xp % 100} / 100
+              </Text>
+            </View>
+            <ProgressBar progress={(xp % 100) / 100} color="indigo" />
+          </View>
+        </Card>
 
         {showLevelUpText && (
           <Animated.View
             style={{
               position: "absolute",
-              top: 60,
+              top: 100,
               left: 0,
               right: 0,
               alignItems: "center",
@@ -376,178 +377,270 @@ export default function Home() {
                   }),
                 },
               ],
+              zIndex: 10,
             }}
             pointerEvents="none"
           >
             <View className="px-6 py-3 bg-yellow-100 dark:bg-yellow-900 rounded-lg border border-yellow-300 dark:border-yellow-700 shadow-md">
               <Text className="text-yellow-800 dark:text-yellow-200 font-bold text-lg">
-                🎉 Level Up! You’re now Level {level}
+                🎉 Level Up! You're now Level {level}
               </Text>
             </View>
           </Animated.View>
         )}
 
-        <Text className="text-2xl font-bold mb-2 text-foreground">
-          📊 Monthly Dashboard
-        </Text>
+        {/* Month Selector */}
+        <View className="flex-row justify-between items-center mb-4 w-full">
+          {/* Left: Icon + Title */}
+          <View className="flex-row flex-1 items-center">
+            <BarChart2 size={20} className="text-indigo-500 mr-2" />
+            <SectionTitle>Monthly Dashboard</SectionTitle>
+          </View>
 
-        {/* Month and Year Dropdowns */}
-        <View className="flex flex-row justify-between gap-2 mb-4">
-          {/* Month Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <TouchableOpacity className="flex flex-row items-center bg-gray-100 dark:bg-zinc-800 p-2 rounded-lg">
-                <Text className="text-foreground mr-2">
-                  {monthOptions[selectedMonth].label}
-                </Text>
-                <ChevronDown className="text-foreground" />
-              </TouchableOpacity>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent style={{ maxHeight: 300 }}>
-              <ScrollView>
-                {monthOptions.map((month) => (
-                  <DropdownMenuItem
-                    key={month.value}
-                    onPress={() => setSelectedMonth(month.value)}
-                  >
-                    <Text className="text-foreground px-2 py-1">
-                      {month.label}
+          {/* Right: Month + Year */}
+          <View className="flex-row w-[140px] justify-between">
+            {/* Month Dropdown */}
+            <View style={{ width: 80 }}>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <TouchableOpacity className="flex-row items-center bg-gray-100 dark:bg-zinc-800 px-3 py-1.5 rounded-lg mr-2">
+                    <Text
+                      className="text-foreground text-sm mr-1"
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {monthOptions[selectedMonth].label}
                     </Text>
-                  </DropdownMenuItem>
-                ))}
-              </ScrollView>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                    <ChevronDown size={14} className="text-foreground" />
+                  </TouchableOpacity>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent style={{ maxHeight: 300 }}>
+                  <ScrollView>
+                    {monthOptions.map((month) => (
+                      <DropdownMenuItem
+                        key={month.value}
+                        onPress={() => setSelectedMonth(month.value)}
+                      >
+                        <Text className="text-foreground px-2 py-1">
+                          {month.label}
+                        </Text>
+                      </DropdownMenuItem>
+                    ))}
+                  </ScrollView>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </View>
 
-          {/* Year Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <TouchableOpacity className="flex flex-row items-center bg-gray-100 dark:bg-zinc-800 p-2 rounded-lg">
-                <Text className="text-foreground mr-2">{selectedYear}</Text>
-                <ChevronDown className="text-foreground" />
-              </TouchableOpacity>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              {yearOptions.map((year) => (
-                <DropdownMenuItem
-                  key={year}
-                  onPress={() => {
-                    setSelectedYear(year);
-                  }}
-                >
-                  <Text className="text-foreground px-2 py-1">{year}</Text>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+            {/* Year Dropdown */}
+            <View style={{ width: 60 }}>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <TouchableOpacity className="flex-row items-center bg-gray-100 dark:bg-zinc-800 px-3 py-1.5 rounded-lg">
+                    <Text className="text-foreground text-sm mr-1">
+                      {selectedYear}
+                    </Text>
+                    <ChevronDown size={14} className="text-foreground" />
+                  </TouchableOpacity>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  {yearOptions.map((year) => (
+                    <DropdownMenuItem
+                      key={year}
+                      onPress={() => setSelectedYear(year)}
+                    >
+                      <Text className="text-foreground px-2 py-1">{year}</Text>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </View>
+          </View>
         </View>
 
-        <View className="bg-gray-100 dark:bg-zinc-800 p-4 rounded-lg mb-4">
-          <Text className="text-lg font-semibold text-foreground">
-            Total Spending:
-          </Text>
-          <Text className="text-red-600 text-xl font-bold">
-            RM {Math.abs(totalSpending).toFixed(2)}
-          </Text>
-        </View>
+        {/* Total Spending Card */}
+        <Card>
+          <View className="flex-row justify-between items-center">
+            <View>
+              <Text className="text-sm text-muted-foreground mb-1">
+                Total Spending
+              </Text>
+              <Text className="text-red-600 text-2xl font-bold">
+                RM {Math.abs(totalSpending).toFixed(2)}
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => setShowCircleChart(!showCircleChart)}
+              className="px-3 py-1.5 rounded-lg bg-indigo-100 dark:bg-indigo-900"
+            >
+              <Text className="text-indigo-700 dark:text-indigo-200 text-sm font-medium">
+                {showCircleChart ? "List View" : "Chart View"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </Card>
 
-        <Text className="text-lg font-semibold mb-2 text-foreground">
-          Spending by Category:
-        </Text>
+        {/* Spending by Category */}
+        <View className="mb-4">
+          <SectionTitle>
+            <View className="flex-row items-center">
+              <TrendingUp size={18} className="text-indigo-500 mr-2" />
+              <Text>Spending by Category</Text>
+            </View>
+          </SectionTitle>
 
-        {showCircleChart ? (
-          <PieChart
-            style={{ height: 200 }}
-            data={Object.entries(categoryTotals).map(([category, amount]) => ({
-              key: category,
-              value: Math.abs(amount), // make sure expenses are positive
-              svg: { fill: getRandomColor(category) },
-              arc: { outerRadius: "100%", cornerRadius: 5 },
-            }))}
-            innerRadius="50%"
-            outerRadius="90%"
-          />
-        ) : (
-          Object.entries(categoryTotals).map(([category, amount]) => {
-            const budget = budgets[category];
-            const progress = budget ? Math.min(Math.abs(amount) / budget, 1) : null;
-            const isOverBudget = budget && amount > budget;
-
-            return (
-              <View
-                key={category}
-                className="bg-white dark:bg-zinc-900 p-3 rounded-lg border dark:border-zinc-700 mb-3"
-              >
-                <Text className="text-base text-foreground mb-1">
-                  {category}
-                </Text>
-                <Text
-                  className={`font-semibold ${
-                    isOverBudget ? "text-red-600" : "text-red-500"
-                  }`}
-                >
-                  Spent: RM {Math.abs(amount).toFixed(2)}
-                  {budget && ` / RM ${budget.toFixed(2)}`}
-                </Text>
-                {/* Progress Bar continues here */}
-                {typeof progress === "number" && (
-                  <View className="flex-row items-center mt-2">
-                    <View className="flex-1 h-3 bg-gray-300 dark:bg-zinc-700 rounded-full overflow-hidden">
-                      <View
-                        style={{ width: `${progress * 100}%` }}
-                        className={`h-full rounded-full ${
-                          isOverBudget ? "bg-red-600" : "bg-green-500"
-                        }`}
-                      />
-                    </View>
-                    <View className="flex-row items-center ml-2">
-                      <Text className="text-lg mr-1">
-                        {getBudgetEmoji(progress)}
-                      </Text>
-                      <Text className="text-sm text-foreground">
-                        {Math.round(progress * 100)}%
-                      </Text>
-                    </View>
-                  </View>
+          {showCircleChart ? (
+            <Card>
+              <PieChart
+                style={{ height: 200 }}
+                data={Object.entries(categoryTotals).map(
+                  ([category, amount]) => ({
+                    key: category,
+                    value: Math.abs(amount),
+                    svg: {
+                      fill: getCategoryColor(category),
+                      onPress: () => setSelectedCategory(category),
+                    },
+                    arc: { outerRadius: "100%", cornerRadius: 5 },
+                  })
                 )}
-              </View>
-            );
-          })
-        )}
+                innerRadius="40%"
+                outerRadius="95%"
+              />
 
+              {selectedCategory && (
+                <View className="mt-4 items-center">
+                  <Text className="text-lg font-semibold text-foreground">
+                    {selectedCategory}
+                  </Text>
+                  <Text className="text-sm text-muted-foreground">
+                    {(
+                      (Math.abs(categoryTotals[selectedCategory]) /
+                        Math.abs(totalSpending)) *
+                      100
+                    ).toFixed(1)}
+                    % — RM{" "}
+                    {Math.abs(categoryTotals[selectedCategory]).toFixed(2)}
+                  </Text>
+                </View>
+              )}
+
+              {/* Legend */}
+              <View className="flex-row flex-wrap mt-4 justify-center">
+                {Object.entries(categoryTotals).map(([category, amount]) => (
+                  <View
+                    key={category}
+                    className="flex-row items-center mr-4 mb-2"
+                  >
+                    <View
+                      style={{
+                        width: 12,
+                        height: 12,
+                        borderRadius: 6,
+                        backgroundColor: getCategoryColor(category),
+                        marginRight: 4,
+                      }}
+                    />
+                    <Text className="text-xs text-foreground">{category}</Text>
+                  </View>
+                ))}
+              </View>
+            </Card>
+          ) : (
+            Object.entries(categoryTotals).map(([category, amount]) => {
+              const budget = budgets[category];
+              const progress = budget
+                ? Math.min(Math.abs(amount) / budget, 1)
+                : null;
+              const isOverBudget = budget && Math.abs(amount) > budget;
+
+              return (
+                <Card key={category}>
+                  <View className="flex-row justify-between items-center mb-2">
+                    <Text className="text-base font-medium text-foreground">
+                      {category}
+                    </Text>
+                    {isOverBudget ? (
+                      <Badge label="Over Budget" color="red" />
+                    ) : budget ? (
+                      <Badge label="Within Budget" color="green" />
+                    ) : null}
+                  </View>
+
+                  <View className="flex-row justify-between items-center mb-2">
+                    <Text className="text-muted-foreground text-sm">Spent</Text>
+                    <Text
+                      className={`font-semibold ${
+                        isOverBudget ? "text-red-600" : "text-foreground"
+                      }`}
+                    >
+                      RM {Math.abs(amount).toFixed(2)}
+                      {budget && ` / RM ${budget.toFixed(2)}`}
+                    </Text>
+                  </View>
+
+                  {typeof progress === "number" && (
+                    <View className="mt-2">
+                      <ProgressBar
+                        progress={progress}
+                        color={isOverBudget ? "red" : "green"}
+                      />
+                      <View className="flex-row justify-between mt-1">
+                        <Text className="text-xs text-muted-foreground">
+                          {Math.round(progress * 100)}% used
+                        </Text>
+                        <Text className="text-lg">
+                          {getBudgetEmoji(progress)}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+                </Card>
+              );
+            })
+          )}
+        </View>
+
+        {/* Badges Section */}
         {earnedBadges.length > 0 && (
-          <>
-            <Text className="text-lg font-semibold mt-4 mb-2 text-foreground">
-              🎖️ Your Badges:
-            </Text>
+          <View className="mb-4">
+            <View className="flex-row justify-between items-center mb-3">
+              <View className="flex-row items-center">
+                <Award size={18} className="text-indigo-500 mr-2" />
+                <SectionTitle>Your Badges</SectionTitle>
+              </View>
+
+              <Button
+                onPress={() => router.push("/(tabs)/badges")}
+                variant="outline"
+                size="sm"
+              >
+                View All
+              </Button>
+            </View>
+
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              className="mb-4"
+              contentContainerStyle={{ paddingBottom: 8 }}
             >
               {earnedBadges.map((badge) => (
-                <View
+                <Card
                   key={badge.id}
-                  className="bg-white dark:bg-zinc-900 p-3 rounded-lg border dark:border-zinc-700 mr-2 items-center"
+                  style={{
+                    marginRight: 12,
+                    width: 100,
+                    alignItems: "center",
+                    paddingVertical: 12,
+                  }}
                 >
-                  <Text className="text-2xl">{badge.icon}</Text>
-                  <Text className="text-sm text-center text-foreground">
+                  <Text className="text-3xl mb-2">{badge.icon}</Text>
+                  <Text className="text-xs text-center text-foreground">
                     {badge.label}
                   </Text>
-                </View>
+                </Card>
               ))}
             </ScrollView>
-
-            {/* 👉 View More Button */}
-            <TouchableOpacity
-              onPress={() => router.push("/(tabs)/badges")}
-              className="self-end px-4 py-2 rounded-lg bg-indigo-600 dark:bg-indigo-400"
-            >
-              <Text className="text-white dark:text-black font-semibold">
-                View More →
-              </Text>
-            </TouchableOpacity>
-          </>
+          </View>
         )}
       </ScrollView>
     </SafeAreaView>
