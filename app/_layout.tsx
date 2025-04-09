@@ -141,7 +141,7 @@ export default function RootLayout() {
           </Stack>
           <PortalHost />
         </ThemeProvider>
-        <DevToolsBubble onCopy={onCopy} />
+        {/* <DevToolsBubble onCopy={onCopy} /> */}
       </GestureHandlerRootView>
     </QueryClientProvider>
   );
