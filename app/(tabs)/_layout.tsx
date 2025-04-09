@@ -8,6 +8,9 @@ import { useRouter } from "expo-router";
 import { auth } from "~/firebaseConfig";
 import { ColorSchemeToggle } from "~/components/color-scheme-toggle";
 import { NAV_THEME } from "~/lib/constants";
+import { BarChart2 } from "~/lib/icons/BarChart2";
+import { Award } from "~/lib/icons/Award";
+import { Sparkles } from "~/lib/icons/Sparkles";
 
 export default function TabsLayout() {
   const { isDarkColorScheme } = useColorScheme();
@@ -31,46 +34,72 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="home"
         options={{
+          title: "Home",
           headerTitle: "Home",
           headerTitleStyle: { fontFamily: "inter-medium" },
           headerTitleAlign: "center",
-          title: "Home",
           tabBarIcon: ({ color }) => <House size={20} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="settings"
+        name="transaction-history"
         options={{
-          headerTitle: "Settings",
+          title: "Transactions",
+          headerTitle: "Transactions",
           headerTitleStyle: { fontFamily: "inter-medium" },
           headerTitleAlign: "center",
-          title: "Settings",
-          tabBarIcon: ({ color }) => <Settings size={20} color={color} />,
+          tabBarIcon: ({ color }) => <BarChart2 size={20} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="badges"
         options={{
-          headerTitle: "Profile",
-          title: "Profile",
+          title: "Badges",
+          headerTitle: "Badges",
           headerTitleStyle: { fontFamily: "inter-medium" },
           headerTitleAlign: "center",
-          tabBarIcon: ({ color }) => <User size={20} color={color} />,
+          tabBarIcon: ({ color }) => <Award size={20} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="playground"
+        options={{
+          title: "Playground",
+          headerTitle: "Playground",
+          headerTitleStyle: { fontFamily: "inter-medium" },
+          headerTitleAlign: "center",
+          tabBarIcon: ({ color }) => <Sparkles size={20} color={color} />,
         }}
       />
       <Tabs.Screen
         name="food"
         options={{
-          headerTitle: "Food Finder",
           title: "Food Finder",
+          headerTitle: "Food Finder",
           headerTitleStyle: { fontFamily: "inter-medium" },
           headerTitleAlign: "center",
           tabBarIcon: ({ color }) => <Utensils size={20} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="transaction-history"
-        options={{ title: "Transactions" }}
+        name="settings"
+        options={{
+          title: "Settings",
+          headerTitle: "Settings",
+          headerTitleStyle: { fontFamily: "inter-medium" },
+          headerTitleAlign: "center",
+          tabBarIcon: ({ color }) => <Settings size={20} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          headerTitle: "Profile",
+          headerTitleStyle: { fontFamily: "inter-medium" },
+          headerTitleAlign: "center",
+          tabBarIcon: ({ color }) => <User size={20} color={color} />,
+        }}
       />
     </Tabs>
   );

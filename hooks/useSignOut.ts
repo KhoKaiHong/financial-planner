@@ -4,7 +4,7 @@ import { auth } from "~/firebaseConfig";
 
 export function useSignOut() {
   return useMutation({
-    mutationFn: () => signOut(auth),
+    mutationFn: async () => await signOut(auth),
     mutationKey: ["signOut"],
   });
 }

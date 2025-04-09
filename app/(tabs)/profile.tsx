@@ -1,29 +1,36 @@
-import { View } from "react-native";
+import { View, ScrollView } from "react-native";
 import { Text } from "~/components/ui/text";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { auth } from "~/firebaseConfig";
 import { useSignOut } from "~/hooks/useSignOut";
 import { Button } from "~/components/ui/button";
 import { useRouter } from "expo-router";
 import { LoadingCircle } from "~/components/loading-circle";
+import React from "react";
+import { UserInfo } from "~/components/profile/user-info";
+import { BudgetSettingsCard } from "~/components/profile/budget-settings";
+import { CurrentBudgetCard } from "~/components/profile/current-budget";
 
 export default function Profile() {
   const router = useRouter();
 
-  const { mutate, isPending } = useSignOut();
+  const signOutMutation = useSignOut();
 
   return (
-    <SafeAreaView className="flex-1">
-      <View className="px-8 flex flex-col gap-4">
-        <Text className="py-16 text-5xl self-center font-inter-thin">
-          Profile
-        </Text>
-        <Text>{auth.currentUser?.email}</Text>
-        <Text>{auth.currentUser?.displayName}</Text>
+    <ScrollView
+      className="flex-1"
+      contentContainerStyle={{ paddingBottom: 20 }}
+      showsVerticalScrollIndicator={false}
+    >
+      <View className="px-8 flex gap-4">
+        <UserInfo />
+
+        <View className="mb-6 flex gap-4">
+          <BudgetSettingsCard />
+          <CurrentBudgetCard />
+        </View>
         <Button
           variant="destructive"
           onPress={() => {
-            mutate(undefined, {
+            signOutMutation.mutate(undefined, {
               onSuccess: () => {
                 router.dismissAll();
                 router.replace("/");
@@ -37,13 +44,12 @@ export default function Profile() {
         >
           <Text>Sign out</Text>
         </Button>
-        <Text>{auth.currentUser?.email}</Text>
+        {signOutMutation.isPending && (
+          <View className="absolute flex justify-center items-center w-full h-full bg-background">
+            <LoadingCircle size={60} />
+          </View>
+        )}
       </View>
-      {isPending && (
-        <View className="absolute flex justify-center items-center w-full h-full bg-background">
-          <LoadingCircle size={60} />
-        </View>
-      )}
-    </SafeAreaView>
+    </ScrollView>
   );
 }

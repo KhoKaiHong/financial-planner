@@ -91,7 +91,7 @@ async function getNearbyRestaurants(body: getNearbyRestaurantsBody) {
     }));
 
     const aiResponse = await fetch(
-      "http://192.168.100.61:8081/api/food-recommendation",
+      `http://${process.env.EXPO_PUBLIC_APP_LOCAL_IP_ADDRESS ?? "127.0.0.1"}:8081/api/food-recommendation`,
       {
         headers: {
           "Content-Type": "application/json",
