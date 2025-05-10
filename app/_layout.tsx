@@ -9,7 +9,7 @@ import {
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as React from "react";
-import { Platform } from "react-native";
+import { Platform, View } from "react-native";
 import { NAV_THEME } from "~/lib/constants";
 import { useColorScheme } from "~/lib/useColorScheme";
 import { DevToolsBubble } from "react-native-react-query-devtools";
@@ -20,6 +20,8 @@ import { useEffect } from "react";
 import { useFonts } from "expo-font";
 import { PortalHost } from "@rn-primitives/portal";
 import { ColorSchemeToggle } from "~/components/color-scheme-toggle";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { Text } from "~/components/ui/text";
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -99,38 +101,48 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
-        <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
-        <Stack screenOptions={{ headerRight: () => <ColorSchemeToggle /> }}>
-          <Stack.Screen
-            name="index"
-            options={{
-              headerTitle: "Login",
-              headerTitleStyle: { fontFamily: "inter-medium" },
-              headerTitleAlign: "center",
-            }}
-          />
-          <Stack.Screen
-            name="signup"
-            options={{
-              headerTitle: "Sign Up",
-              headerTitleStyle: { fontFamily: "inter-medium" },
-              headerTitleAlign: "center",
-            }}
-          />
-          <Stack.Screen
-            name="verify"
-            options={{
-              headerTitle: "Verify Your Email",
-              headerTitleStyle: { fontFamily: "inter-medium" },
-              headerTitleAlign: "center",
-            }}
-          />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        </Stack>
-        <PortalHost />
-      </ThemeProvider>
-      <DevToolsBubble onCopy={onCopy} />
+      <GestureHandlerRootView>
+        <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
+          <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
+          <Stack screenOptions={{ headerRight: () => <ColorSchemeToggle /> }}>
+            <Stack.Screen
+              name="index"
+              options={{
+                headerTitle: "Login",
+                headerTitleStyle: { fontFamily: "inter-medium" },
+                headerTitleAlign: "center",
+              }}
+            />
+            <Stack.Screen
+              name="signup"
+              options={{
+                headerTitle: "Sign Up",
+                headerTitleStyle: { fontFamily: "inter-medium" },
+                headerTitleAlign: "center",
+              }}
+            />
+            <Stack.Screen
+              name="verify"
+              options={{
+                headerTitle: "Verify Your Email",
+                headerTitleStyle: { fontFamily: "inter-medium" },
+                headerTitleAlign: "center",
+              }}
+            />
+            <Stack.Screen
+              name="error"
+              options={{
+                headerTitle: "Error",
+                headerTitleStyle: { fontFamily: "inter-medium" },
+                headerTitleAlign: "center",
+              }}
+            />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          </Stack>
+          <PortalHost />
+        </ThemeProvider>
+        {/* <DevToolsBubble onCopy={onCopy} /> */}
+      </GestureHandlerRootView>
     </QueryClientProvider>
   );
 }

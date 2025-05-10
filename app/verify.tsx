@@ -21,6 +21,14 @@ async function performVerification() {
   }
 }
 
+async function reloadUser() {
+  if (auth.currentUser) {
+    await auth.currentUser.reload();
+  } else {
+    throw new Error("No user");
+  }
+}
+
 export default function Verify() {
   const router = useRouter();
 
@@ -34,6 +42,12 @@ export default function Verify() {
   const { mutate, isSuccess, isError, isPending } = useMutation({
     mutationKey: ["verify"],
     mutationFn: performVerification,
+  });
+
+  const reloadUserMutation = useMutation({
+    mutationKey: ["reloadUser"],
+    mutationFn: reloadUser,
+    retry: 5,
   });
 
   useEffect(() => {
@@ -94,7 +108,10 @@ export default function Verify() {
           <Button
             className="w-64"
             onPress={() => {
-              router.replace("/");
+              reloadUserMutation.mutate(undefined, {
+                onSuccess: () => router.replace("/home"),
+                onError: () => router.replace("/error"),
+              });
             }}
           >
             <Text>I have verified my email</Text>
